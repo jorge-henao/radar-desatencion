@@ -1,0 +1,46 @@
+meta {
+  name: 22 · Tool — crear_evento (need)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/tools/crear_evento
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+script:pre-request {
+  bru.setVar("tools_idem_need", "tools-ne-" + Date.now());
+}
+
+body:json {
+  {
+    "type": "need",
+    "payload": {
+      "pcode": "27660C01",
+      "categorias": ["agua", "alimentos"],
+      "hogares_rango": "21-50",
+      "pin": { "lat": 4.9861, "lon": -76.234 },
+      "nombre_lugar": "corregimiento San Pedro"
+    },
+    "reporter_ref": "vozy-ref-tools-need",
+    "idempotency_key": "{{tools_idem_need}}"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.folio: isDefined
+}
+
+docs {
+  Contrato: POST /tools/crear_evento tipo need. Devuelve { folio, warnings[] }
+  (sin acta_url — solo dispatch la genera). El enum de categorías
+  (agua|alimentos|medicamentos|aseo|techo|otro) se valida server-side.
+  Idempotencia por idempotency_key: reintento con la misma key → mismo folio.
+}

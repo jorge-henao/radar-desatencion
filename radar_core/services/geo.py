@@ -67,9 +67,16 @@ def resolver_texto(texto: str) -> dict:
             "motivo": "sin_candidatos",
         }
     mejor = candidatos[0]
+    # score 1.0 solo ocurre con identidad de tokens ("match exacto"). Un exacto
+    # único no es ambiguo aunque haya vecinos fuzzy cerca ("San José del Palmar"
+    # no debe frenarse por "Palmar" o "San José de la Montaña"); dos exactos
+    # (dos veredas "La Cabaña") sí se desambiguan conversando.
+    exacto = mejor["confianza"] >= 0.999
+    segundo_exacto = len(candidatos) > 1 and candidatos[1]["confianza"] >= 0.999
     ambiguo = (
         len(candidatos) > 1
         and candidatos[1]["confianza"] >= mejor["confianza"] - 0.12
+        and (not exacto or segundo_exacto)
     )
     confianza = mejor["confianza"] if not ambiguo else min(mejor["confianza"], settings.umbral_confianza_geo - 0.01)
     return {

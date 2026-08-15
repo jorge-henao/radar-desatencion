@@ -88,9 +88,13 @@ class Gazetteer:
 
         puntajes: dict[str, dict] = {}
         for e in self._entradas:
-            # El nombre del municipio usado como contexto no debe competir consigo mismo
-            # salvo que sea lo único que hay en el texto.
-            score = fuzz.token_set_ratio(texto_norm, e.nombre_norm) / 100.0
+            # token_set premia subconjuntos ("Palmar" ⊂ "San José del Palmar" da 100):
+            # se mezcla con token_sort para que el match que cubre TODO el texto
+            # gane sobre el que solo cubre un pedazo.
+            score = (
+                0.6 * fuzz.token_set_ratio(texto_norm, e.nombre_norm)
+                + 0.4 * fuzz.token_sort_ratio(texto_norm, e.nombre_norm)
+            ) / 100.0
             if score < 0.60:
                 continue
             # Boost por contexto de municipio (U-55, U-52)

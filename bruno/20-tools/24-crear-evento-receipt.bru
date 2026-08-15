@@ -1,0 +1,46 @@
+meta {
+  name: 24 · Tool — crear_evento (receipt)
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{base_url}}/tools/crear_evento
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+script:pre-request {
+  bru.setVar("tools_idem_receipt", "tools-rc-" + Date.now());
+}
+
+body:json {
+  {
+    "type": "receipt",
+    "payload": {
+      "folio_citado": "{{tools_folio_dispatch}}",
+      "pcode": "27660C01",
+      "categorias": ["agua", "alimentos"],
+      "hogares": 28,
+      "pin": { "lat": 4.9858, "lon": -76.2338 }
+    },
+    "reporter_ref": "vozy-ref-tools-receipt",
+    "idempotency_key": "{{tools_idem_receipt}}"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.folio: isDefined
+}
+
+docs {
+  Contrato: POST /tools/crear_evento tipo receipt, citando el folio del
+  dispatch (request 23). folio_citado puede venir sucio del dictado por voz
+  ("ds 0392") — el Core lo normaliza. Si el folio no existe o falta, el evento
+  se crea igual y entra al match probabilístico posterior.
+}

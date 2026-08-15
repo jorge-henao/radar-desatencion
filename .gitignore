@@ -6,3 +6,4 @@ var/
 dist/
 .env
 poetry.lock.bak
+data/

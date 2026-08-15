@@ -1,0 +1,53 @@
+meta {
+  name: 23 · Tool — crear_evento (dispatch)
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{base_url}}/tools/crear_evento
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+script:pre-request {
+  bru.setVar("tools_idem_dispatch", "tools-ds-" + Date.now());
+}
+
+body:json {
+  {
+    "type": "dispatch",
+    "payload": {
+      "pcode": "27660C01",
+      "items": [
+        { "categoria": "alimentos", "cantidad": 80, "unidad": "kits" },
+        { "categoria": "agua", "cantidad": 120, "unidad": "bidones" }
+      ],
+      "org_nombre": "Acopio Pereira",
+      "eta": "mañana en la tarde"
+    },
+    "reporter_ref": "vozy-ref-tools-dispatch",
+    "idempotency_key": "{{tools_idem_dispatch}}"
+  }
+}
+
+vars:post-response {
+  tools_folio_dispatch: res.body.folio
+}
+
+assert {
+  res.status: eq 200
+  res.body.folio: isDefined
+  res.body.acta_url: isDefined
+}
+
+docs {
+  Contrato: POST /tools/crear_evento tipo dispatch. Único tipo que devuelve
+  acta_url (PDF con folio + QR wa.me). Si otra organización ya declaró al
+  mismo destino, warnings[] trae posible_duplicado. El folio queda en
+  {{tools_folio_dispatch}} para las requests 24 y 25.
+}

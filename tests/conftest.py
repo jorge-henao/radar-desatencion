@@ -25,7 +25,11 @@ from radar_core.services import eventos as svc_eventos
 from radar_core.services.gazetteer import gazetteer
 from radar_core.services.ratelimit import rate_limiter
 
-TEST_DB_URL = "postgresql+psycopg://postgres:radar@localhost:54329/radar"
+# Base PROPIA de la suite (radar_test): los tests truncan y siembran datos
+# sintéticos — jamás deben tocar la base de desarrollo (radar), que puede
+# tener los datos DANE reales cargados por scripts/seed_dane.py.
+TEST_DB_URL = "postgresql+psycopg://postgres:radar@localhost:54329/radar_test"
+_ADMIN_DB_URL = "postgresql+psycopg://postgres:radar@localhost:54329/radar"
 TOKEN = "test-token"
 AUTH = {"Authorization": f"Bearer {TOKEN}"}
 
@@ -43,8 +47,22 @@ def _cuadro(lon0, lat0, lon1, lat1) -> dict:
     }
 
 
+def _asegurar_db_test() -> None:
+    from sqlalchemy import create_engine
+
+    admin = create_engine(_ADMIN_DB_URL, isolation_level="AUTOCOMMIT")
+    with admin.connect() as conn:
+        existe = conn.execute(
+            text("SELECT 1 FROM pg_database WHERE datname = 'radar_test'")
+        ).scalar()
+        if not existe:
+            conn.execute(text("CREATE DATABASE radar_test"))
+    admin.dispose()
+
+
 @pytest.fixture(scope="session", autouse=True)
 def _configurar():
+    _asegurar_db_test()
     settings.database_url = TEST_DB_URL
     settings.workspace_tokens = TOKEN
     settings.reporter_salt = "salt-de-pruebas"

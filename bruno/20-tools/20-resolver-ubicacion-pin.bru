@@ -1,0 +1,38 @@
+meta {
+  name: 20 · Tool — resolver_ubicacion (modo pin)
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/tools/resolver_ubicacion
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "lat": 4.9861,
+    "lon": -76.234
+  }
+}
+
+vars:post-response {
+  tools_pcode: res.body.pcode
+}
+
+assert {
+  res.status: eq 200
+  res.body.nivel: isDefined
+  res.body.pcode: isDefined
+}
+
+docs {
+  Contrato: POST /tools/resolver_ubicacion con { lat, lon } (pin GPS de WhatsApp).
+  Devuelve { pcode, nivel, nombre_oficial, confianza, candidatos[] } al nivel
+  DIVIPOLA más específico (municipio o centro poblado).
+}

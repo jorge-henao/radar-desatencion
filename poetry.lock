@@ -1196,6 +1196,21 @@ files = [
 windows-terminal = ["colorama (>=0.4.6)"]
 
 [[package]]
+name = "pyshp"
+version = "3.1.6"
+description = "Pure Python read/write support for ESRI Shapefile format"
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+files = [
+    {file = "pyshp-3.1.6-py3-none-any.whl", hash = "sha256:be8cd9436dcbde477c63ea789f7dcdea3af19f17ea84f2744bfc12efe9145d1e"},
+    {file = "pyshp-3.1.6.tar.gz", hash = "sha256:4c4b5a4138815c93defd6ebe50bae885b7e58984f431cdb7bb5d00718ac71daf"},
+]
+
+[package.extras]
+stubs = ["pyshp-stubs"]
+
+[[package]]
 name = "pytest"
 version = "9.1.1"
 description = "pytest: simple powerful testing with Python"
@@ -1927,4 +1942,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.13,<3.14"
-content-hash = "85d174c825131f0e176f45499b3e6b58ba90ae3b89bb525836911e0ce24a2be0"
+content-hash = "009553629408b7f13915013a4b37c295b49533bbfbd223ef8fb561df77b193f7"

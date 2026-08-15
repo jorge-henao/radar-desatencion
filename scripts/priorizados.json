@@ -1,0 +1,9 @@
+{
+  "_comentario": "Curaduría de municipios priorizados. EDITAR: poblacion_estimada (hogares/personas afectadas estimadas, censo o CMGRD) y factor_accesibilidad (1.0 = vía transitable, menor = más difícil; fuente Invias #767). Solo estos municipios (y sus centros poblados y veredas) entran a la métrica de desatención. Los ~85 municipios UNGRD son el techo; este arranque son los más citados en la investigación — valores INICIALES A VALIDAR.",
+  "27660": { "nombre": "San José del Palmar (Chocó)", "poblacion_estimada": 4700, "factor_accesibilidad": 0.3 },
+  "27001": { "nombre": "Quibdó (Chocó)", "poblacion_estimada": 130000, "factor_accesibilidad": 0.8 },
+  "76828": { "nombre": "Riofrío (Valle)", "poblacion_estimada": 13000, "factor_accesibilidad": 0.5 },
+  "76243": { "nombre": "El Águila (Valle)", "poblacion_estimada": 10000, "factor_accesibilidad": 0.4 },
+  "76364": { "nombre": "Jamundí (Valle)", "poblacion_estimada": 130000, "factor_accesibilidad": 0.9 },
+  "66170": { "nombre": "Dosquebradas (Risaralda)", "poblacion_estimada": 230000, "factor_accesibilidad": 0.9 }
+}

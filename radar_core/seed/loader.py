@@ -25,6 +25,9 @@ _INSERT_GEO = text(
          :poblacion_estimada, :factor_accesibilidad, :priorizado)
     ON CONFLICT (pcode) DO UPDATE SET
         nombre = EXCLUDED.nombre,
+        nivel = EXCLUDED.nivel,
+        departamento = EXCLUDED.departamento,
+        municipio_pcode = EXCLUDED.municipio_pcode,
         geom = EXCLUDED.geom,
         poblacion_estimada = EXCLUDED.poblacion_estimada,
         factor_accesibilidad = EXCLUDED.factor_accesibilidad,

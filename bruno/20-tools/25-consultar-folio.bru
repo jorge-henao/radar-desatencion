@@ -1,0 +1,31 @@
+meta {
+  name: 25 · Tool — consultar_folio
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{base_url}}/tools/consultar_folio?folio={{tools_folio_dispatch}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.existe: eq true
+  res.body.type: eq dispatch
+  res.body.estado: isDefined
+  res.body.resumen: isDefined
+}
+
+docs {
+  Contrato: GET /tools/consultar_folio?folio=DS-NNNN. Devuelve
+  { existe, type, estado, resumen }. Un folio inexistente responde
+  { existe: false } con 200 — es una respuesta válida, no un error
+  (ver 94-folio-inexistente en contrato-y-errores). Usa el folio del
+  dispatch creado en la request 23.
+}

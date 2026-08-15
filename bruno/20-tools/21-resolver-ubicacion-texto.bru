@@ -1,0 +1,34 @@
+meta {
+  name: 21 · Tool — resolver_ubicacion (modo texto)
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/tools/resolver_ubicacion
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "texto": "corregimiento San Pedro, San José del Palmar"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.pcode: isDefined
+  res.body.candidatos: isDefined
+}
+
+docs {
+  Contrato: POST /tools/resolver_ubicacion con { texto } — transcripción de voz,
+  posiblemente sucia. Resuelve contra el gazetteer con fuzzy match. Si
+  confianza < umbral, candidatos[] trae las opciones para que el agente
+  desambigüe antes de crear el evento.
+}
