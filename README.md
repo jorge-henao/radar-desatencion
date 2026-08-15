@@ -71,13 +71,18 @@ En voz no hay pin GPS: la ubicación llega como nombre hablado transcrito ("la v
 Radar Core está implementado en **Python 3.13 + FastAPI + SQLAlchemy 2** (Poetry), con PostgreSQL + PostGIS.
 
 ```bash
-poetry install                 # requiere Python 3.13
-./scripts/dev_db.sh            # PostGIS local en Docker (puerto 54329)
-poetry run uvicorn radar_core.main:app --reload   # servicio en :8000
+poetry install   # requiere Python 3.13
 
-poetry run pytest              # suite completa (ver docs/test-suite.md)
-poetry run pytest -m unit      # solo unitarias — también: integration, service, performance, transversal
+make up          # DB (Docker) + seed demo + servicio en background (:8000)
+make e2e         # colección Bruno de punta a punta (23 requests, storyboard completo)
+make down        # baja servicio y base de datos
+make dev         # alternativa: servicio en foreground con hot reload
+
+make test        # suite completa (ver docs/test-suite.md)
+poetry run pytest -m unit   # por marcador — también: integration, service, performance, transversal
 ```
+
+La colección [bruno/](bruno/) recorre todos los casos de uso en el orden natural del storyboard (necesidad → despacho → acta → recepción → reconciliación → comprobante → salida pública) y se puede abrir en la app de Bruno o correr con `make e2e`.
 
 Deploy: [Dockerfile](Dockerfile) + [railway.toml](railway.toml) (healthcheck en `/health`, puerto por env `PORT`). Las variables `RADAR_*` requeridas están documentadas en `railway.toml`.
 

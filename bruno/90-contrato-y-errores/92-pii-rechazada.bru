@@ -1,0 +1,38 @@
+meta {
+  name: 92 · El esquema no acepta PII → 400
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/tools/crear_evento
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "type": "receipt",
+    "payload": {
+      "pcode": "27660C01",
+      "categorias": ["agua"],
+      "hogares": 5,
+      "cedula": "1234567890"
+    },
+    "reporter_ref": "vozy-ref-x",
+    "idempotency_key": "pii-cedula"
+  }
+}
+
+assert {
+  res.status: eq 400
+}
+
+docs {
+  Jamás se pide (ni se acepta) cédula, teléfono o datos bancarios. El esquema
+  rechaza campos extra: el PII no puede entrar al Radar ni por accidente.
+}

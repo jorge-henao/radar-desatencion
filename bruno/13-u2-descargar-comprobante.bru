@@ -1,0 +1,22 @@
+meta {
+  name: 13 · U2 — Descargar el comprobante de entrega
+  type: http
+  seq: 13
+}
+
+get {
+  url: {{base_url}}/comprobantes/{{folio_despacho}}.pdf
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+  res.headers['content-type']: eq application/pdf
+}
+
+docs {
+  Storyboard paso 7: la fundación recibe su comprobante con confirmación
+  independiente desde territorio — listo para el informe al donante y la
+  legalización UNGRD. Nivel: "confirmación independiente + folio citado".
+}

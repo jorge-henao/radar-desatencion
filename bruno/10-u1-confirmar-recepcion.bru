@@ -1,0 +1,53 @@
+meta {
+  name: 10 · U1 — Confirmar recepción citando el folio (receipt)
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{base_url}}/tools/crear_evento
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+script:pre-request {
+  bru.setVar("idem_recepcion", "bruno-rc-" + Date.now());
+  // el folio llega dictado por voz, sucio: "ds 0392" en vez de "DS-0392"
+  const folio = bru.getVar("folio_despacho") || "";
+  bru.setVar("folio_dictado", folio.toLowerCase().replace("-", " "));
+}
+
+body:json {
+  {
+    "type": "receipt",
+    "payload": {
+      "folio_citado": "{{folio_dictado}}",
+      "pcode": "{{pcode_destino}}",
+      "categorias": ["agua", "alimentos"],
+      "hogares": 28,
+      "pin": { "lat": 4.9858, "lon": -76.2338 }
+    },
+    "reporter_ref": "vozy-ref-presidente-jac",
+    "idempotency_key": "{{idem_recepcion}}"
+  }
+}
+
+vars:post-response {
+  folio_recepcion: res.body.folio
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  Storyboard paso 6: el presidente de la JAC, con el acta en la mano, confirma:
+  "llegó la ayuda del folio DS-xxxx, como 28 hogares". No tiene que ser la misma
+  persona que reportó la necesidad. El folio se cita dictado ("ds 0392") y el
+  Core lo normaliza. La confirmación es la señal más limpia del sistema:
+  nadie exagera lo que ya recibió.
+}

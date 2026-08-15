@@ -1,0 +1,29 @@
+meta {
+  name: 90 · Sin token → 401 estructurado
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/tools/crear_evento
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "type": "receipt",
+    "payload": { "pcode": "27660C01", "categorias": ["agua"], "hogares": 5 },
+    "reporter_ref": "x",
+    "idempotency_key": "sin-token"
+  }
+}
+
+assert {
+  res.status: eq 401
+}
+
+docs {
+  Token de workspace obligatorio en toda la Tools API. Sin efectos secundarios:
+  el evento NO se crea.
+}

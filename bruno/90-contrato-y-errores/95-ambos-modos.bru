@@ -1,0 +1,32 @@
+meta {
+  name: 95 · Pin y texto a la vez → 400
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{base_url}}/tools/resolver_ubicacion
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "lat": 4.9861,
+    "lon": -76.234,
+    "texto": "San Pedro"
+  }
+}
+
+assert {
+  res.status: eq 400
+}
+
+docs {
+  resolver_ubicacion exige exactamente un modo: {lat, lon} (pin de WhatsApp)
+  o {texto} (nombre hablado, voz). Ninguno o ambos → 400 estructurado.
+}

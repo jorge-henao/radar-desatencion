@@ -1,0 +1,26 @@
+meta {
+  name: 94 · Folio inexistente → resultado, no error
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{base_url}}/tools/consultar_folio?folio=DS-9999
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.existe: eq false
+}
+
+docs {
+  Un receipt puede citar un folio con typo de dictado o inexistente:
+  {existe: false} con 200. El flujo del agente continúa sin folio y la
+  reconciliación probabilística intenta el cruce después.
+}

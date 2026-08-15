@@ -1,0 +1,22 @@
+meta {
+  name: 14 · U4 — Tabla pública (la que se usa a las 6 a.m.)
+  type: http
+  seq: 14
+}
+
+get {
+  url: {{base_url}}/public/tabla.html
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  Sin login. Territorios ordenados por desatención: alerta máxima arriba
+  (sin datos ≠ sin necesidad), luego días sin recepción × hogares × vía.
+  San Pedro debería aparecer ya con contador en 0 tras el cierre del ciclo.
+  Estática: este request jamás toca la base de datos.
+}

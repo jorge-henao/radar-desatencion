@@ -1,0 +1,26 @@
+meta {
+  name: 12 · U3 — El folio quedó reconciliado
+  type: http
+  seq: 12
+}
+
+get {
+  url: {{base_url}}/tools/consultar_folio?folio={{folio_despacho}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.existe: eq true
+  res.body.estado: eq reconciliado
+}
+
+docs {
+  Storyboard paso 7: el CMGRD ve el cierre. Si la recepción nunca hubiera
+  llegado, tras N días vería la alerta de desfase en su lugar.
+}

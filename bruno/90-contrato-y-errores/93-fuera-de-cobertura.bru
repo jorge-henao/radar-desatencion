@@ -1,0 +1,32 @@
+meta {
+  name: 93 · Pin fuera de cobertura → estructurado, no error
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{base_url}}/tools/resolver_ubicacion
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "lat": 2.0,
+    "lon": -80.0
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.motivo: eq fuera_de_cobertura
+}
+
+docs {
+  Un pin en el mar (o fuera de los territorios cargados) es un resultado
+  estructurado con confianza 0 — nunca un 500. El agente repregunta la ubicación.
+}

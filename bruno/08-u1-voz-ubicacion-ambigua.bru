@@ -1,0 +1,33 @@
+meta {
+  name: 08 · U1 — Voz: nombre de lugar ambiguo
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{base_url}}/tools/resolver_ubicacion
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "texto": "la vereda La Cabaña"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.motivo: eq ambiguo
+}
+
+docs {
+  Canal de voz: no hay pin GPS, la ubicación llega como nombre hablado transcrito.
+  "La Cabaña" existe en Jamundí y en Riofrío → el Core devuelve candidatos[] con
+  confianza bajo el umbral y el agente repregunta:
+  "¿La Cabaña de Jamundí o la de Riofrío?"
+}

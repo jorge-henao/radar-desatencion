@@ -1,0 +1,33 @@
+meta {
+  name: 09 · U1 — Voz: transcripción sucia desambiguada
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{base_url}}/tools/resolver_ubicacion
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "texto": "la beredita la cabaña por jamundi, por ahí cerquita"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.pcode: eq 76364V01
+}
+
+docs {
+  El usuario respondió "la de Jamundí". La transcripción llega sucia (habla
+  regional, sin ortografía) y el fuzzy match del gazetteer resuelve igual:
+  vereda La Cabaña, Jamundí. Este es el caso que hace posible el canal de voz
+  con señal 2G.
+}

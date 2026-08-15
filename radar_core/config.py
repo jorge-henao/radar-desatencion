@@ -9,7 +9,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -19,6 +19,16 @@ class Settings(BaseSettings):
     database_url: str = Field(
         default="postgresql+psycopg://postgres:radar@localhost:54329/radar",
     )
+
+    @field_validator("database_url")
+    @classmethod
+    def _forzar_driver_psycopg(cls, v: str) -> str:
+        # Railway/Heroku entregan postgres:// o postgresql://; el driver instalado
+        # es psycopg 3 — se normaliza para poder referenciar DATABASE_URL tal cual.
+        for prefijo in ("postgres://", "postgresql://"):
+            if v.startswith(prefijo):
+                return "postgresql+psycopg://" + v[len(prefijo):]
+        return v
     # Tokens de workspace separados por coma. Mutables en runtime vía rotate_tokens().
     workspace_tokens: str = Field(default="dev-token")
     # Salt del hash de reporter_ref. NUNCA se versiona ni se exporta (X-03).

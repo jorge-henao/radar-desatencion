@@ -1,0 +1,22 @@
+meta {
+  name: 15 · U4 — Datos abiertos CSV (HXL)
+  type: http
+  seq: 15
+}
+
+get {
+  url: {{base_url}}/public/datos.csv
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  CSV con etiquetas HXL en la segunda fila (#geo+code, #loc+name, ...):
+  consumible por HDX y el sector humanitario, no otro silo. Columnas estables
+  entre corridas — son contrato con los consumidores externos. Cero PII:
+  agregado a pcode, nunca pins ni referencias.
+}

@@ -1,0 +1,22 @@
+meta {
+  name: 16 · U4 — GeoJSON por territorio
+  type: http
+  seq: 16
+}
+
+get {
+  url: {{base_url}}/public/datos.geojson
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+  res.body.type: eq FeatureCollection
+}
+
+docs {
+  Un feature por pcode DIVIPOLA con la métrica de desatención en properties.
+  Cruza con todo lo que ya existe en Colombia (p-codes). Geometrías
+  simplificadas de los polígonos DANE — jamás pins individuales.
+}

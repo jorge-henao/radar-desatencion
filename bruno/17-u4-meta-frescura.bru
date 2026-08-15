@@ -1,0 +1,20 @@
+meta {
+  name: 17 · U4 — Frescura del export
+  type: http
+  seq: 17
+}
+
+get {
+  url: {{base_url}}/public/meta.json
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  {generado_el, territorios}: el sello de frescura del export estático.
+  En producción se regenera cada 5 minutos detrás de Cloudflare.
+}

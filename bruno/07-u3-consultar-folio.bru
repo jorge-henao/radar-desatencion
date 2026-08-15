@@ -1,0 +1,27 @@
+meta {
+  name: 07 · U3 — Consultar folio (antes del cierre)
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{base_url}}/tools/consultar_folio?folio={{folio_despacho}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.existe: eq true
+  res.body.type: eq dispatch
+  res.body.estado: eq registrado
+}
+
+docs {
+  El agente radar_recepcion valida el folio que cita quien confirma la recepción
+  y precarga el destino. Estado "registrado": aún sin recepción confirmada.
+}

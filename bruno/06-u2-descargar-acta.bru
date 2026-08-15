@@ -1,0 +1,22 @@
+meta {
+  name: 06 · U2 — Descargar el acta (PDF + QR)
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{base_url}}/actas/{{folio_despacho}}.pdf
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+  res.headers['content-type']: eq application/pdf
+}
+
+docs {
+  Storyboard paso 5: el acta lleva el folio, el número oficial de WhatsApp y un
+  QR wa.me/<num>?text=DS-xxxx. Se imprime y viaja físicamente con el camión —
+  cada entrega siembra un reportante. Pública: quien tiene el papel puede escanearla.
+}

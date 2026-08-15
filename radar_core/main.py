@@ -16,7 +16,7 @@ from fastapi.staticfiles import StaticFiles
 from . import db, ddl
 from .config import get_settings
 from .errors import registrar_manejadores
-from .routers import publico, tools
+from .routers import admin, publico, tools
 from .services.gazetteer import gazetteer
 
 # Logging de acceso propio: método, ruta y status — NUNCA cuerpos, refs ni
@@ -49,6 +49,13 @@ async def lifespan(app: FastAPI):
     ddl.init_db(db.engine())
     with db.session_factory()() as session:
         gazetteer.refresh(session)
+    try:
+        # Export inicial: la salida pública existe desde el arranque.
+        from .services import export
+
+        export.exportar(db.engine())
+    except Exception:
+        log.exception("export inicial falló; el loop de jobs lo reintentará")
     tarea = asyncio.create_task(_loop_jobs(app))
     yield
     tarea.cancel()
@@ -68,6 +75,7 @@ def create_app(with_jobs: bool = True) -> FastAPI:
 
     app.include_router(tools.router)
     app.include_router(publico.router)
+    app.include_router(admin.router)
 
     s = get_settings()
     s.ensure_dirs()

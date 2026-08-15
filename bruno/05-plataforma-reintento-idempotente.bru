@@ -1,0 +1,44 @@
+meta {
+  name: 05 · Plataforma — Reintento del tool call (idempotencia)
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{base_url}}/tools/crear_evento
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "type": "dispatch",
+    "payload": {
+      "pcode": "{{pcode_destino}}",
+      "items": [
+        { "categoria": "alimentos", "cantidad": 80, "unidad": "kits" },
+        { "categoria": "agua", "cantidad": 120, "unidad": "bidones" }
+      ],
+      "org_nombre": "Acopio Pereira",
+      "eta": "mañana en la tarde"
+    },
+    "reporter_ref": "vozy-ref-coordinadora-acopio",
+    "idempotency_key": "{{idem_despacho}}"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.folio: eq {{folio_despacho}}
+}
+
+docs {
+  La plataforma Vozy percibe un timeout y reintenta el mismo @tool_call con la
+  misma idempotency_key (conversación + paso). El Core devuelve EL MISMO folio
+  del paso 04 y no crea un segundo evento. La idempotencia vive en el Core,
+  no en el agente.
+}

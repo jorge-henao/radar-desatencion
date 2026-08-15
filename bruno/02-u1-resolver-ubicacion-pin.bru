@@ -1,0 +1,38 @@
+meta {
+  name: 02 · U1 — Resolver ubicación (pin GPS de WhatsApp)
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/tools/resolver_ubicacion
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "lat": 4.9861,
+    "lon": -76.234
+  }
+}
+
+vars:post-response {
+  pcode_destino: res.body.pcode
+}
+
+assert {
+  res.status: eq 200
+  res.body.pcode: eq 27660C01
+  res.body.nivel: eq centro_poblado
+}
+
+docs {
+  Storyboard paso 1: la promotora de salud manda el pin de WhatsApp desde el
+  corregimiento San Pedro (San José del Palmar, Chocó). PostGIS lo resuelve al
+  nivel DIVIPOLA más específico. El pcode queda capturado para los pasos siguientes.
+}

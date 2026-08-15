@@ -1,0 +1,29 @@
+meta {
+  name: 11 · Sistema — Reconciliar, notificar y exportar
+  type: http
+  seq: 11
+}
+
+post {
+  url: {{base_url}}/internal/run_jobs
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.reconciliacion.deterministicos: gte 1
+}
+
+docs {
+  Dispara a demanda el ciclo que en producción corre cada 5 minutos:
+  1. Reconciliación DS↔RC (acá cruza el despacho del paso 04 con la recepción
+     del paso 10, match determinístico por folio citado).
+  2. Outbox de notificaciones (comprobante_listo hacia la plataforma — en dev
+     el host de notify no existe, así que quedará "fallida"; es esperado).
+  3. Export estático (tabla.html, datos.csv, datos.geojson).
+}

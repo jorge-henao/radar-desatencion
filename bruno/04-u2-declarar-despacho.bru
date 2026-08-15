@@ -1,0 +1,53 @@
+meta {
+  name: 04 · U2 — Declarar despacho (dispatch)
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{base_url}}/tools/crear_evento
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+script:pre-request {
+  bru.setVar("idem_despacho", "bruno-ds-" + Date.now());
+}
+
+body:json {
+  {
+    "type": "dispatch",
+    "payload": {
+      "pcode": "{{pcode_destino}}",
+      "items": [
+        { "categoria": "alimentos", "cantidad": 80, "unidad": "kits" },
+        { "categoria": "agua", "cantidad": 120, "unidad": "bidones" }
+      ],
+      "org_nombre": "Acopio Pereira",
+      "eta": "mañana en la tarde"
+    },
+    "reporter_ref": "vozy-ref-coordinadora-acopio",
+    "idempotency_key": "{{idem_despacho}}"
+  }
+}
+
+vars:post-response {
+  folio_despacho: res.body.folio
+  acta_url: res.body.acta_url
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  Storyboard paso 4: la coordinadora de bodega declara en 30 segundos:
+  "alimentos 80 kits, agua 120 bidones → San Pedro, llega mañana". Devuelve
+  folio DS-xxxx + acta_url. El acta impresa viaja con el camión (paso 5).
+  Si otra organización ya declaró al mismo destino, warnings[] trae
+  posible_duplicado y se le notifica (alerta_duplicacion).
+}

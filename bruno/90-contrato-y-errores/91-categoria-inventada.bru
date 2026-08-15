@@ -1,0 +1,34 @@
+meta {
+  name: 91 · Categoría inventada por el LLM → 400
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/tools/crear_evento
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "type": "receipt",
+    "payload": { "pcode": "27660C01", "categorias": ["mercaditos"], "hogares": 5 },
+    "reporter_ref": "vozy-ref-x",
+    "idempotency_key": "categoria-mala"
+  }
+}
+
+assert {
+  res.status: eq 400
+}
+
+docs {
+  La validación de dominio no se delega al LLM: el enum
+  (agua|alimentos|medicamentos|aseo|techo|otro) se valida server-side.
+  El error trae {codigo, campo, motivo} para que el agente repregunte.
+}

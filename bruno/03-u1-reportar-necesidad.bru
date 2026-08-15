@@ -1,0 +1,49 @@
+meta {
+  name: 03 · U1 — Reportar necesidad (need)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/tools/crear_evento
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+script:pre-request {
+  bru.setVar("idem_necesidad", "bruno-ne-" + Date.now());
+}
+
+body:json {
+  {
+    "type": "need",
+    "payload": {
+      "pcode": "{{pcode_destino}}",
+      "categorias": ["agua", "alimentos"],
+      "hogares_rango": "21-50",
+      "pin": { "lat": 4.9861, "lon": -76.234 },
+      "nombre_lugar": "corregimiento San Pedro"
+    },
+    "reporter_ref": "vozy-ref-promotora-001",
+    "idempotency_key": "{{idem_necesidad}}"
+  }
+}
+
+vars:post-response {
+  folio_necesidad: res.body.folio
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  Storyboard paso 1: "¿Qué hace más falta ahí?" → agua y alimentos, 21-50 hogares.
+  El disclaimer de expectativa ("esto NO garantiza una entrega") vive en el agente
+  Vozy, no acá. reporter_ref es el ID opaco de la plataforma — nunca el teléfono.
+  Devuelve folio NE-xxxx.
+}
