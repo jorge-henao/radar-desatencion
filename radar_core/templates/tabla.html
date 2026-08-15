@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Radar de Desatención</title>
+<style>
+  body { font-family: -apple-system, system-ui, sans-serif; margin: 2rem; color: #1a1a1a; background: #fff; }
+  h1 { font-size: 1.4rem; }
+  .meta { color: #666; font-size: .85rem; margin-bottom: 1rem; }
+  table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+  th, td { border: 1px solid #ddd; padding: .45rem .6rem; text-align: left; }
+  th { background: #f5f5f5; cursor: pointer; }
+  tr.alerta { background: #fff3f0; font-weight: 600; }
+  .nota { margin-top: 1rem; font-size: .8rem; color: #666; }
+</style>
+</head>
+<body>
+<h1>Radar de Desatención — días sin recepción registrada por territorio</h1>
+<p class="meta">Generado el {{ generado_el }} · datos agregados a nivel DIVIPOLA · sin datos personales</p>
+<table>
+  <thead>
+    <tr>
+      <th>Territorio</th><th>Nivel</th><th>Departamento</th>
+      <th>Días sin recepción</th><th>Hogares ~</th><th>Faltante reportado</th><th>Vía (factor)</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for f in filas %}
+    <tr class="{{ 'alerta' if f.estado == 'alerta_maxima' else '' }}">
+      <td>{{ f.nombre }} <small>({{ f.pcode }})</small></td>
+      <td>{{ f.nivel }}</td>
+      <td>{{ f.departamento or '' }}</td>
+      <td>{% if f.estado == 'alerta_maxima' %}&#9888; ALERTA MÁXIMA — sin datos &ne; sin necesidad{% else %}{{ f.dias_sin_recepcion }}{% endif %}</td>
+      <td>{{ f.hogares_estimados or '?' }}</td>
+      <td>{{ f.faltante_reportado or '' }}</td>
+      <td>{{ f.factor_accesibilidad }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+<p class="nota">Territorio sin ningún evento = alerta máxima, no dato faltante: quien no puede reportar es exactamente la población objetivo.
+Descargas: <a href="datos.csv">datos.csv (HXL)</a> · <a href="datos.geojson">datos.geojson</a></p>
+</body>
+</html>

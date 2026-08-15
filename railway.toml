@@ -1,0 +1,17 @@
+# Configuración de deploy en Railway.
+# Variables requeridas en el servicio:
+#   RADAR_DATABASE_URL      → postgresql+psycopg://... (plugin Postgres con PostGIS)
+#   RADAR_WORKSPACE_TOKENS  → tokens de los agentes Vozy, separados por coma
+#   RADAR_REPORTER_SALT     → salt del hash de identidad (secreto)
+#   RADAR_FERNET_KEY        → clave Fernet para el outbox de notificaciones (secreto)
+#   RADAR_PUBLIC_BASE_URL   → URL pública del servicio (detrás de Cloudflare)
+#   RADAR_PLATAFORMA_NOTIFY_URL → API de salida proactiva de la plataforma Vozy
+#   RADAR_WA_NUMERO_OFICIAL → número oficial de WhatsApp (para el QR de las actas)
+
+[build]
+builder = "dockerfile"
+
+[deploy]
+healthcheckPath = "/health"
+healthcheckTimeout = 60
+restartPolicyType = "on_failure"
