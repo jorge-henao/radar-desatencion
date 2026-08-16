@@ -97,8 +97,11 @@ make down        # baja servicio y base de datos
 make dev         # alternativa: servicio en foreground con hot reload
 
 make test        # suite completa (ver docs/test-suite.md)
-poetry run pytest -m unit   # por marcador — también: integration, service, performance, transversal
+poetry run pytest -m epica01   # por épica — también: epica02, epica03, e2e
+poetry run pytest -m unit      # por tipo — también: integration, service, performance, transversal
 ```
+
+Las pruebas están organizadas **por épica** (unitarias, integración y contrato de cada una) más clasificaciones del sistema completo (`tests/e2e/`, `tests/performance/`, `tests/transversal/`), y se escriben desde el punto de vista de los sistemas que se integran con el Radar (agentes Vozy, visitante web, Lili Analyze, feed de aliados, fuentes de medios).
 
 La colección [bruno/](bruno/) recorre todos los casos de uso en el orden natural del storyboard (necesidad → despacho → acta → recepción → reconciliación → comprobante → salida pública) y se puede abrir en la app de Bruno o correr con `make e2e`.
 

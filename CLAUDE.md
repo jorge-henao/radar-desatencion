@@ -22,7 +22,7 @@ poetry run pytest                               # suite completa
 poetry run pytest -m "unit or service"          # por marcador: unit/integration/service/performance/transversal
 ```
 
-Estructura: `radar_core/` (app) — `models.py` + `ddl.py` (esquema, trigger append-only, MVs), `schemas.py` (contrato Pydantic), `routers/` (tools + público), `services/` (eventos, geo, gazetteer, reconciliación, export, actas, notificador), `seed/loader.py` (ingesta DANE/gazetteer). Tests en `tests/` mapeados 1:1 a los IDs de docs/test-suite.md.
+Estructura: `radar_core/` (app) — `models.py` + `ddl.py` (esquema, trigger append-only, MVs), `schemas.py` (contrato Pydantic), `routers/` (tools + público), `services/` (eventos, geo, gazetteer, reconciliación, export, actas, notificador), `seed/loader.py` (ingesta DANE/gazetteer). Tests en `tests/` mapeados 1:1 a los IDs de docs/test-suite.md, organizados **por épica** (`epica01_radar_atencion/{unit,integration,contrato}/`, `epica02_…`, `epica03_…`) más clasificaciones del sistema completo (`e2e/`, `performance/`, `transversal/`). Los markers de épica (`epica01`..`epica03`, `e2e`) se derivan de la carpeta en el conftest raíz; los de tipo (`unit`, `integration`, `service`, …) van como `pytestmark` en cada módulo.
 
 ## Componentes del Radar Core
 
@@ -122,11 +122,12 @@ No hay tablas de conversaciones ni de mensajes — la sesión es problema de la 
 
 ## Testing
 
-La suite de casos está en [docs/test-suite.md](docs/test-suite.md). Prioridades al implementar:
+La suite de casos está en [docs/test-suite.md](docs/test-suite.md), cubre las tres épicas (IDs `U-/I-/S-` para la 01, `U2-/I2-/S2-` y `U3-/I3-/S3-` para las especificadas, `E-` para los escenarios inter-épicas) y espeja la estructura de `tests/`. Prioridades al implementar:
 
-1. Los tests de **invariantes** (PII, append-only, agregación pública, idempotencia) son bloqueantes — se escriben junto con la primera versión de cada componente, no después.
-2. Los tests de contrato de la Tools API simulan al agente Vozy como consumidor (incluye reintentos y payloads malformados por el LLM).
-3. Presupuesto de latencia: los tool calls son **síncronos dentro de una conversación de voz** — ver umbrales en la suite.
+1. Los tests de **invariantes** (PII, append-only, agregación pública, idempotencia — y en las épicas nuevas: consentimiento, señales fuera del log, solo-lectura de Analyze) son bloqueantes — se escriben junto con la primera versión de cada componente, no después.
+2. Las pruebas se escriben **desde el punto de vista de los sistemas que se integran**: el agente Vozy (reintentos, payloads malformados por el LLM), el visitante web, el API de Analyze simulado, el feed de aliados, las fuentes de medios (incluido contenido adversarial con inyección de prompt).
+3. Presupuesto de latencia: los tool calls son **síncronos dentro de una conversación de voz** — ver umbrales en la suite (aplica también a `buscar_gracias`).
+4. Al implementar componentes de las épicas 02/03, crear la subestructura espejo (`unit/`, `integration/`, `contrato/`) dentro de su carpeta — ver los README en `tests/epica02_radar_ciudadano/` y `tests/epica03_radar_operativo/`.
 
 ## Trampas conocidas
 
@@ -134,3 +135,4 @@ La suite de casos está en [docs/test-suite.md](docs/test-suite.md). Prioridades
 - La plataforma **reintenta tool calls** ante timeouts: cualquier endpoint de escritura sin idempotencia real produce eventos duplicados en producción.
 - Un `receipt` puede citar un folio inexistente o con typo (dictado por voz) — `consultar_folio` debe distinguir "no existe" de error, y el flujo debe continuar sin folio (match probabilístico posterior).
 - Los shapefiles DANE tienen polígonos con geometrías inválidas ocasionales — sanear al cargar (`ST_MakeValid`), no en query time.
+- Las MVs calculan días con `floor()` contra `now()` **de Postgres**. En tests, cualquier `created_at` sintético debe derivarse del reloj de la DB (`SELECT now()`), nunca del reloj del host: el contenedor Docker puede ir milisegundos detrás y los "hace N días" exactos caen justo en la frontera del floor — falla intermitente que solo aparece con la suite completa.
