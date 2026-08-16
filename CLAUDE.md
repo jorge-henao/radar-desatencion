@@ -8,6 +8,8 @@ Guía para Claude Code al trabajar en este repositorio.
 
 Lee [docs/architecture.md](docs/architecture.md) antes de tocar cualquier cosa del contrato o del modelo de datos. La investigación de fondo está en [problem_ressearch.md](problem_ressearch.md).
 
+El producto se organiza en tres épicas ([epic_specs/](epic_specs/)): **01 Radar de Atención** (el core — implementada), **02 Radar Ciudadano** (vista narrativa pública + banco de voces + integración Ayudas Pereira — especificada, componentes 9–11) y **03 Radar Operativo** (vista de despacho + agente Vigía de Medios — especificada, componentes 12–14). Antes de implementar algo de las épicas 02/03, lee la épica correspondiente completa: las decisiones marcadas "no re-debatir" ya están tomadas, y los puntos `[FALTA]` son incógnitas reales, no descuidos. Para cualquier front, la spec vinculante es [docs/especificacion_front.md](docs/especificacion_front.md) — ante ambigüedad con el prototipo ([docs/refs_diseno_html/](docs/refs_diseno_html/)), gana la spec.
+
 ## Estado del proyecto
 
 Radar Core implementado: Python 3.13 + FastAPI + SQLAlchemy 2 + PostGIS, gestionado con Poetry.
@@ -34,6 +36,17 @@ Estructura: `radar_core/` (app) — `models.py` + `ddl.py` (esquema, trigger app
 | Export estático | tabla.html + CSV/HXL + GeoJSON cada 5 min |
 | Notificador | Decide cuándo avisar; llama a `POST {plataforma}/notify` con referencia opaca |
 
+**Componentes especificados, aún no implementados** (épicas 02 y 03):
+
+| # | Componente | Épica | Responsabilidad |
+|---|---|---|---|
+| 9 | Banco de voces | 02 | Adaptador API Lili Analyze (solo lectura, mapeo configurable) + copia/recorte/transcodificación a MP3 + gate de moderación + tabla `audio_gracias` + tool `buscar_gracias` |
+| 10 | Importador de feeds de aliados | 02 | Poller de `acopios.json` (Ayudas Pereira), normalización, degradación automática a fase 0 si el feed cae |
+| 11 | Generador de vista ciudadana | 02 | Template Jinja2 según especificacion_front.md: `vista-ciudadana.json` desde el log, plantillas server-side, HTML autocontenido ≤45KB |
+| 12 | Vigía de Medios | 03 | Agente LangGraph **dentro del core** (sin dependencias de plataforma) + job del scheduler + `vigia.yaml` + tabla `senales_medios` con dedupe/decaimiento/conversión |
+| 13 | Cola de incorporación de localidades | 03 | `localidades_por_incorporar` + enriquecimiento DIVIPOLA/COD-AB + aprobación humana → alta en gazetteer |
+| 14 | Vista operativa | 03 | Template Jinja2 + `vista-operativa.json` en el export + filtros client-side + sección de revisión |
+
 ## Contrato de la Tools API (la frontera que importa)
 
 ```
@@ -47,6 +60,10 @@ POST /tools/crear_evento
 
 GET  /tools/consultar_folio?folio=DS-0392
   out: { existe, type, estado, resumen }
+
+POST /tools/buscar_gracias                      ← épica 02, no implementada aún
+  in:  { pcode?, sentimiento?, categorias?[], texto_libre?, aleatorio: bool }
+  out: { clip_url_ogg, clip_url_mp3, territorio_nombre, pcode, duracion_s, fecha }
 ```
 
 Autenticación: token de workspace. Los errores de validación se devuelven **estructurados** (código + campo + motivo) para que el agente los traduzca a repreguntas.
@@ -61,6 +78,10 @@ Autenticación: token de workspace. Los errores de validación se devuelven **es
 6. **`mv_desatencion`: sin eventos = `alerta_maxima`, nunca NULL.** El silencio es el dato.
 7. **El export estático no lee de la DB en el request path** — se regenera por job y se sirve detrás de Cloudflare.
 8. **El Core nunca envía mensajes directamente.** Notificaciones solo vía la API de salida proactiva de la plataforma.
+9. **Las señales de medios NUNCA entran al log de eventos** (épica 03). El log es exclusivamente hechos de primera mano; las señales del Vigía viven en `senales_medios` y se unen con el log solo en presentación, con procedencia explícita. Toda señal lleva cita textual + URL verificable; sin URL, la señal se descarta. Nunca se publica una localidad sin pcode conciliado.
+10. **Audio sin consentimiento explícito jamás es público** (épica 02). El flag de consentimiento es regla dura; sin él, el audio queda solo como evidencia privada del despachador reconciliado. Lili Analyze se consume **exclusivamente por su API de solo lectura** — nunca Elasticsearch/S3 directo, y el Radar nunca invoca el análisis.
+11. **El front no inventa — renderiza** (épicas 02/03). Todo string visible proviene del JSON del export, de las plantillas taxativas (P1–P8) o del microcopy fijo (M0–M7) de la spec del front. Prohibido inferir personas, causas, citas o cifras que no estén en los datos.
+12. **El Vigía nunca degrada la alerta por ausencia.** Territorio sin eventos NI señales sigue siendo alerta máxima — las señales de medios elevan visibilidad, no reemplazan el silencio como dato.
 
 ## Modelo de datos
 
@@ -71,6 +92,14 @@ geo_divipola      -- polígonos DANE (municipios + centros poblados)
 gazetteer         -- nombre de lugar → pcode, con alias y fuzzy match (habilita voz)
 mv_desatencion    -- métrica por pcode
 mv_reconciliacion -- estado del match dispatch↔receipt
+
+-- Especificadas (épicas 02/03), aún no implementadas:
+audio_gracias     -- banco de voces: source, territorio_pcode (nunca pin), consentimiento
+                  -- NOT NULL, estado de moderación, urls original/pública
+acopios           -- catálogo de acopios de aliados (feed Ayudas Pereira)
+senales_medios    -- señales del Vigía: cita + url NOT NULL, refuerzos, decaimiento,
+                  -- estado activa|caducada|descartada|convertida — FUERA del log
+localidades_por_incorporar -- cola de conciliación de localidades → alta en gazetteer
 ```
 
 No hay tablas de conversaciones ni de mensajes — la sesión es problema de la plataforma.
@@ -82,6 +111,8 @@ No hay tablas de conversaciones ni de mensajes — la sesión es problema de la 
 - **Folios:** formato `DS-NNNN` (ej. `DS-0392`), únicos, citables por voz y por QR.
 - **Idioma:** dominio, documentación y mensajes de error orientados al agente en **español**. Código (identificadores) en el idioma que establezca el primer módulo — mantener consistencia.
 - **Datos públicos:** CSV con etiquetas HXL; GeoJSON válido; nombres de columna estables (son contrato con consumidores externos).
+- **Front (épicas 02/03, decisión cerrada):** cero servicios nuevos, cero Node, cero framework — Jinja2 en el export + vanilla JS + mapa SVG autocontenido; archivo único ≤45KB que funciona offline. Identidad: claro = A · Registro civil, oscuro = E · Tinta profunda (`prefers-color-scheme`, sin toggle). Semántica dura: teal = confirmado, ámbar = espera, `--alerta` solo para alerta máxima. Ningún color hardcodeado fuera de `:root`.
+- **Configuración sobre deploy:** las capacidades condicionales (fases Ayudas Pereira, moderación auto/manual/híbrido, modos de la vista operativa, fuentes del Vigía en `vigia.yaml`) se encienden/apagan por configuración, nunca desplegando código. La degradación ante fallas de dependencias externas es automática.
 
 ## Reglas de los agentes Vozy (por diseño de flujo, no por prompt)
 

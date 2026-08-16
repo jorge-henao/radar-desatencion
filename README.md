@@ -42,12 +42,13 @@ Ciudadano/Promotora ──WhatsApp/Voz──► Plataforma Vozy (existente)
 
 Detalle completo: [docs/architecture.md](docs/architecture.md)
 
-## Los tres endpoints del contrato
+## Los endpoints del contrato
 
 ```
 POST /tools/resolver_ubicacion   pin GPS o nombre hablado → pcode DIVIPOLA + confianza
 POST /tools/crear_evento         evento normalizado + idempotency_key → folio (+ acta para dispatch)
 GET  /tools/consultar_folio      folio → existe, tipo, estado, resumen
+POST /tools/buscar_gracias       (épica 02) filtros pcode/sentimiento/categoría → clip de audio aprobado
 ```
 
 Y una salida proactiva: el Core llama a `POST {plataforma}/notify` con una referencia opaca — decide *cuándo* y *qué* notificar; la plataforma resuelve *a quién* y *cómo*.
@@ -65,6 +66,23 @@ Y una salida proactiva: el Core llama a `POST {plataforma}/notify` con una refer
 ## El canal de voz es el caso difícil
 
 En voz no hay pin GPS: la ubicación llega como nombre hablado transcrito ("la vereda La Cabaña, por Jamundí"). Por eso `resolver_ubicacion` tiene modo texto contra un **gazetteer** (centros poblados DANE + veredas curadas para los 10–15 municipios priorizados) con score de confianza y desambiguación conversacional. Es el constraint dominante del territorio: la promotora con señal 2G llama, habla, y el evento entra igual.
+
+## Las tres épicas
+
+El producto está organizado en tres épicas ([epic_specs/](epic_specs/)); la primera está implementada, las otras dos están especificadas y cerradas para implementación:
+
+| Épica | Qué agrega | Estado |
+|---|---|---|
+| [01 · Radar de Atención](epic_specs/epica01_radar_atencion.md) | El core: log de eventos, Tools API, gazetteer, reconciliación, actas, export estático (componentes 1–8) | ✅ Implementada |
+| [02 · Radar Ciudadano](epic_specs/epica02_radar_ciudadano.md) | Cierre del lazo con el donante: vista pública narrativa (scrollytelling de 5 actos), banco de voces de agradecimiento (WhatsApp + Lili Analyze vía API), integración con Ayudas Pereira en 3 fases activables por configuración, tool `buscar_gracias` (componentes 9–11) | 📋 Especificada |
+| [03 · Radar Operativo](epic_specs/epica03_radar_operativo.md) | Vista de despacho (U2/U3) con arranque en frío resuelto: agente **Vigía de Medios** (LangGraph dentro del core) que extrae señales estructuradas de medios confiables — con cita + URL, conciliadas al gazetteer, **nunca dentro del log de eventos** — y cola de incorporación de localidades (componentes 12–14) | 📋 Especificada |
+
+### Principios del front (épicas 02 y 03)
+
+- **El front no inventa — renderiza.** Todo string visible proviene del JSON del export, de plantillas taxativas (P1–P8) o de microcopy fijo (M0–M7). Spec completa: [docs/especificacion_front.md](docs/especificacion_front.md); prototipo funcional autocontenido: [docs/refs_diseno_html/radar-ciudadano-historia.html](docs/refs_diseno_html/radar-ciudadano-historia.html).
+- **Identidad visual cerrada:** modo claro = *A · Registro civil*, modo oscuro = *E · Tinta profunda*, por `prefers-color-scheme`. Semántica dura: teal = confirmado, ámbar = espera, rojo solo para alerta máxima.
+- **Stack cerrado:** cero servicios nuevos, cero Node, cero framework — Jinja2 en el export + vanilla JS + mapa SVG autocontenido; archivo único ≤45KB tras Cloudflare, funciona offline.
+- **Procedencia siempre visible** (épica 03): señal de medios ≠ reporte ciudadano ≠ evento con folio; nunca se mezclan sin etiqueta, y el territorio en silencio conserva la alerta máxima.
 
 ## Cómo correrlo
 
@@ -88,20 +106,23 @@ Deploy: [Dockerfile](Dockerfile) + [railway.toml](railway.toml) (healthcheck en 
 
 ## Estado y orden de construcción
 
-**Fase actual: Radar Core implementado y cubierto por la suite de pruebas.** Pendiente: gazetteer con datos DANE reales, agentes en la plataforma Vozy y prueba de punta a punta con un despachador real.
+**Fase actual: épica 01 (Radar Core) implementada, cubierta por la suite de pruebas y con datos DANE reales cargados.** Épicas 02 y 03 especificadas y cerradas para implementación. Pendiente: agentes en la plataforma Vozy, prueba de punta a punta con un despachador real, e implementación de los componentes 9–14.
 
-| Día | Entregable |
+| Orden | Entregable |
 |---|---|
-| 0 | Número (WhatsApp + voz) vía Vozy · shapefiles DANE en PostGIS · workspace y tokens |
-| 1 | Core: `crear_evento` + `resolver_ubicacion` (pin) + log + folios |
-| 2 | Agentes `radar_recepcion` y `radar_despacho` · actas PDF+QR |
-| 3 | Reconciliación + notificador + export estático |
-| 4 | Gazetteer v1 · modo texto · canal de voz |
-| 5 | Agente `radar_necesidad` · prueba punta a punta con despachador real (ABACO / Fundación Éxito) |
+| ✅ | Core: `crear_evento` + `resolver_ubicacion` + `consultar_folio` + log + folios + actas PDF+QR |
+| ✅ | Reconciliación + notificador + export estático + gazetteer con datos DANE reales |
+| ✅ | Ambiente local (make + Bruno) y endpoint operativo `run_jobs` |
+| ⏳ | Agentes Vozy (`radar_recepcion`, `radar_despacho`, `radar_necesidad`) · número WhatsApp + voz |
+| 📋 | Épica 03 — Vigía de Medios + vista operativa (el primer dominó de adopción: útil desde el día cero) |
+| 📋 | Épica 02 — vista ciudadana narrativa + banco de voces + integración Ayudas Pereira |
 
 ## Documentación
 
 - [docs/architecture.md](docs/architecture.md) — arquitectura v2, contrato Agente↔Core, modelo de datos, decisiones abiertas
+- [epic_specs/](epic_specs/) — las tres épicas: [01 Radar de Atención](epic_specs/epica01_radar_atencion.md), [02 Radar Ciudadano](epic_specs/epica02_radar_ciudadano.md), [03 Radar Operativo](epic_specs/epica03_radar_operativo.md)
+- [docs/especificacion_front.md](docs/especificacion_front.md) — spec de implementación del front narrativo: contrato JSON, tokens de diseño, plantillas P1–P8, microcopy M0–M7, mapa SVG, protocolo de verificación
+- [docs/refs_diseno_html/](docs/refs_diseno_html/) — prototipos de referencia (scrollytelling autocontenido, 0 dependencias)
 - [problem_ressearch.md](problem_ressearch.md) — investigación de fondo: diagnóstico, casos comparados (FOREC, Haití, Nepal, Verificado19S), mapa de actores, cuñas de diferenciación
 - [docs/aboutsimilarprojects.md](docs/aboutsimilarprojects.md) — deslinde con Ayudas Pereira (primera milla vs. última milla)
 - [docs/test-suite.md](docs/test-suite.md) — suite de casos de prueba (unitarias, integración, servicio, performance)
