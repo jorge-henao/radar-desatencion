@@ -1,18 +1,18 @@
 vigia:
   activo: true
-  cadencia_horas: 24
-  caducidad_dias: 10
+  cadencia_horas: 2
+  caducidad_dias: 1
   # El proveedor LLM, modelo y API keys NO viven en YAML.
   # Configurar por entorno:
-  # RADAR_VIGIA_LLM_PROVIDER=openai|anthropic
-  # RADAR_VIGIA_LLM_MODEL=<modelo>
+  # RADAR_VIGIA_LLM_PROVIDER=openai
+  # RADAR_VIGIA_LLM_MODEL=gpt-5-mini
   # RADAR_OPENAI_API_KEY=... o RADAR_ANTHROPIC_API_KEY=...
   terminos_busqueda:
     - "ayuda humanitaria {departamento}"
     - "damnificados sin ayuda"
   fuentes:
     - id: eltiempo
-      url: https://www.eltiempo.com/colombia
+      url: https://www.elespectador.com/
       tipo: medio
       confianza: 0.8
       activa: true

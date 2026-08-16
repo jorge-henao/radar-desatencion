@@ -4,6 +4,7 @@
 #   make down    → baja servicio y base de datos
 #   make dev     → servicio en foreground con hot reload (Ctrl+C para salir)
 #   make docker-rebuild → reconstruye imagen Docker y sube el servicio (:8000)
+#   ENV_FILE=.env make docker-rebuild → sube Docker cargando variables desde .env
 #   make e2e     → corre la colección Bruno de punta a punta (requiere `make up`)
 #   make test    → suite completa de pruebas
 #
@@ -21,6 +22,7 @@ LOGFILE := var/radar.log
 DOCKER_IMAGE ?= radar-core:local
 DOCKER_CONTAINER ?= radar-core-local
 DOCKER_DATABASE_URL ?= postgresql+psycopg://postgres:radar@host.docker.internal:54329/radar
+ENV_FILE ?= .env
 
 .PHONY: up down dev db-up db-down seed status logs docker-build docker-up docker-rebuild docker-down test test-perf e2e
 
@@ -55,9 +57,11 @@ db-down:
 docker-build:
 	@docker build -t $(DOCKER_IMAGE) .
 
-docker-up: db-up docker-build
+docker-up: db-up seed docker-build
 	@docker rm -f $(DOCKER_CONTAINER) >/dev/null 2>&1 || true
-	@docker run -d --name $(DOCKER_CONTAINER) \
+	@env_file_arg=""; \
+	if [ -f "$(ENV_FILE)" ]; then env_file_arg="--env-file $(ENV_FILE)"; fi; \
+	docker run -d --name $(DOCKER_CONTAINER) $$env_file_arg \
 		-p $(PORT):8000 \
 		-e PORT=8000 \
 		-e RADAR_DATABASE_URL="$(DOCKER_DATABASE_URL)" \
@@ -70,6 +74,7 @@ docker-up: db-up docker-build
 	@curl -sf http://localhost:$(PORT)/health >/dev/null || (echo "el contenedor no levantó — ver: docker logs $(DOCKER_CONTAINER)" && exit 1)
 	@echo "Radar Core Docker arriba → http://localhost:$(PORT)"
 	@echo "  imagen:  $(DOCKER_IMAGE)"
+	@echo "  env:     $$(test -f "$(ENV_FILE)" && echo "$(ENV_FILE)" || echo "sin archivo .env")"
 	@echo "  logs:    docker logs -f $(DOCKER_CONTAINER) · bajar: make docker-down"
 
 docker-rebuild: docker-up

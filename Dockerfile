@@ -14,6 +14,7 @@ RUN poetry export --without dev -f requirements.txt -o requirements.txt \
     && pip install --no-cache-dir -r requirements.txt
 
 COPY radar_core ./radar_core
+COPY vigia.yaml ./vigia.yaml
 
 # Railway inyecta PORT; /health es el healthcheck.
 ENV RADAR_EXPORT_DIR=/data/public \

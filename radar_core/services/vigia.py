@@ -252,6 +252,8 @@ def extraer_senales_llm(
                 texto = _llamar_anthropic(http, cfg, prompt)
             else:
                 raise VigiaLLMError("Proveedor LLM no soportado")
+        except httpx.HTTPStatusError as exc:
+            raise VigiaLLMError(_detalle_error_http(cfg.provider, exc.response)) from exc
         except httpx.HTTPError as exc:
             raise VigiaLLMError(f"Fallo proveedor LLM {cfg.provider}") from exc
     finally:
@@ -279,7 +281,6 @@ def _llamar_openai(client: httpx.Client, cfg: LLMVigiaConfig, prompt: str) -> st
         json={
             "model": cfg.model,
             "input": prompt,
-            "temperature": 0,
             "text": {"format": _openai_senales_schema()},
         },
     )
@@ -293,6 +294,26 @@ def _llamar_openai(client: httpx.Client, cfg: LLMVigiaConfig, prompt: str) -> st
             if contenido.get("type") in {"output_text", "text"} and contenido.get("text"):
                 partes.append(contenido["text"])
     return "\n".join(partes)
+
+
+def _detalle_error_http(provider: str, response: httpx.Response) -> str:
+    detalle = ""
+    try:
+        data = response.json()
+    except ValueError:
+        detalle = response.text[:240]
+    else:
+        error = data.get("error") if isinstance(data, dict) else None
+        if isinstance(error, dict):
+            partes = [str(response.status_code)]
+            if error.get("code"):
+                partes.append(str(error["code"]))
+            if error.get("message"):
+                partes.append(str(error["message"])[:240])
+            detalle = " · ".join(partes)
+        else:
+            detalle = str(data)[:240]
+    return f"Fallo proveedor LLM {provider}: {detalle}"
 
 
 def _openai_senales_schema() -> dict:

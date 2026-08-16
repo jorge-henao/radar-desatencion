@@ -201,10 +201,11 @@ def test_internal_run_jobs_y_descartar_senal(client, db):
         },
         FUENTE,
     )
-    run = client.post("/internal/run_jobs", headers=AUTH)
+    run = client.post("/internal/run_jobs?forzar_vigia=true", headers=AUTH)
     assert run.status_code == 200
     assert run.json()["vigia"]["run_id"]
     assert run.json()["vigia"]["estado"] in {"ok", "parcial", "omitido"}
+    assert run.json()["vigia"]["forzado"] is True
     invalida = client.post("/internal/senales/no-es-uuid/descartar", headers=AUTH, json={"operador": "cmgrd"})
     assert invalida.status_code == 200
     assert invalida.json() == {"ok": False}

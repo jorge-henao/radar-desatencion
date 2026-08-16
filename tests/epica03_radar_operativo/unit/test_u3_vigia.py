@@ -219,6 +219,7 @@ def test_u3_12_extraer_senales_llm_openai_usa_modelo_configurado():
     assert capturada["url"] == "https://api.openai.com/v1/responses"
     assert capturada["auth"] == "Bearer sk-test"
     assert capturada["body"]["model"] == "gpt-test"
+    assert "temperature" not in capturada["body"]
     assert capturada["body"]["text"]["format"]["type"] == "json_schema"
     assert capturada["body"]["text"]["format"]["schema"]["required"] == ["senales"]
     assert senales[0]["url"] == "https://medio.test/1"
@@ -258,6 +259,29 @@ def test_u3_12_extraer_senales_llm_ignora_url_y_fuente_forjadas():
 
     assert senales[0]["url"] == "https://medio.test/real"
     assert senales[0]["fuente_id"] == "eltiempo"
+
+
+def test_u3_13_extraer_senales_llm_expone_error_http_openai():
+    def handler(request):
+        return httpx.Response(
+            404,
+            json={
+                "error": {
+                    "message": "The model 'fantasma' does not exist",
+                    "type": "invalid_request_error",
+                    "code": "model_not_found",
+                }
+            },
+        )
+
+    cfg = vigia.LLMVigiaConfig(provider="openai", model="fantasma", api_key="sk-test")
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        with pytest.raises(vigia.VigiaLLMError) as exc:
+            vigia.extraer_senales_llm("texto", url="https://medio.test/real", fuente=FUENTE, llm_config=cfg, client=client)
+
+    assert "404" in str(exc.value)
+    assert "model_not_found" in str(exc.value)
+    assert "fantasma" in str(exc.value)
 
 
 def test_u3_12_extraer_senales_llm_envuelve_error_http():
