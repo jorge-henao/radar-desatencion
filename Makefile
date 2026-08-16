@@ -3,6 +3,7 @@
 #   make up      → DB + seed demo + servicio en background (:8000)
 #   make down    → baja servicio y base de datos
 #   make dev     → servicio en foreground con hot reload (Ctrl+C para salir)
+#   make docker-rebuild → reconstruye imagen Docker y sube el servicio (:8000)
 #   make e2e     → corre la colección Bruno de punta a punta (requiere `make up`)
 #   make test    → suite completa de pruebas
 #
@@ -17,8 +18,11 @@ export RADAR_PUBLIC_BASE_URL ?= http://localhost:$(PORT)
 
 PIDFILE := var/radar.pid
 LOGFILE := var/radar.log
+DOCKER_IMAGE ?= radar-core:local
+DOCKER_CONTAINER ?= radar-core-local
+DOCKER_DATABASE_URL ?= postgresql+psycopg://postgres:radar@host.docker.internal:54329/radar
 
-.PHONY: up down dev db-up db-down seed status logs test test-perf e2e
+.PHONY: up down dev db-up db-down seed status logs docker-build docker-up docker-rebuild docker-down test test-perf e2e
 
 up: db-up seed
 	@mkdir -p var
@@ -47,6 +51,31 @@ db-up:
 
 db-down:
 	@docker rm -f radar-postgis >/dev/null 2>&1 && echo "base de datos detenida" || true
+
+docker-build:
+	@docker build -t $(DOCKER_IMAGE) .
+
+docker-up: db-up docker-build
+	@docker rm -f $(DOCKER_CONTAINER) >/dev/null 2>&1 || true
+	@docker run -d --name $(DOCKER_CONTAINER) \
+		-p $(PORT):8000 \
+		-e PORT=8000 \
+		-e RADAR_DATABASE_URL="$(DOCKER_DATABASE_URL)" \
+		-e RADAR_WORKSPACE_TOKENS="$(RADAR_WORKSPACE_TOKENS)" \
+		-e RADAR_NOTIFY_BACKOFF_BASE_SEG="$(RADAR_NOTIFY_BACKOFF_BASE_SEG)" \
+		-e RADAR_NOTIFY_MAX_INTENTOS="$(RADAR_NOTIFY_MAX_INTENTOS)" \
+		-e RADAR_PUBLIC_BASE_URL="$(RADAR_PUBLIC_BASE_URL)" \
+		$(DOCKER_IMAGE) >/dev/null
+	@for i in $$(seq 1 30); do curl -sf http://localhost:$(PORT)/health >/dev/null 2>&1 && break; sleep 1; done
+	@curl -sf http://localhost:$(PORT)/health >/dev/null || (echo "el contenedor no levantó — ver: docker logs $(DOCKER_CONTAINER)" && exit 1)
+	@echo "Radar Core Docker arriba → http://localhost:$(PORT)"
+	@echo "  imagen:  $(DOCKER_IMAGE)"
+	@echo "  logs:    docker logs -f $(DOCKER_CONTAINER) · bajar: make docker-down"
+
+docker-rebuild: docker-up
+
+docker-down:
+	@docker rm -f $(DOCKER_CONTAINER) >/dev/null 2>&1 && echo "contenedor detenido" || true
 
 seed:
 	@poetry run python scripts/seed_demo.py

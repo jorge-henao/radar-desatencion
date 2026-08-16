@@ -180,7 +180,12 @@ def db(engine, geo_semilla):
     """Sesión limpia por test: trunca todo lo transaccional (los seeds geo quedan)."""
     factory = db_mod.session_factory()
     with factory() as s:
-        s.execute(text("TRUNCATE events, reconciliaciones, notificaciones, alertas_internas"))
+        s.execute(
+            text(
+                "TRUNCATE events, reconciliaciones, notificaciones, alertas_internas, "
+                "senales_medios, localidades_por_incorporar, vigia_runs, vigia_documentos"
+            )
+        )
         s.commit()
     rate_limiter.reset()
     with factory() as s:

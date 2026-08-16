@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Radar Operativo</title>
+<style>
+:root{
+  --bg:#F4F6F5; --card:#FFFFFF; --ink:#14231F; --muted:#5C6B66; --line:#D9E0DD;
+  --ok:#0F7B54; --ok-mid:#1D9E75; --ok-soft:#E3F3EC;
+  --wait:#B4690E; --wait-soft:#FBF1DF; --alerta:#CE3A12;
+  --r:8px; --f-sans:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --f-mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){ :root{
+  --bg:#10161A; --card:#161E23; --ink:#E8EDEF; --muted:#93A2A9; --line:#28343B;
+  --ok:#2FBF8F; --ok-mid:#2FBF8F; --ok-soft:#122A23; --wait:#E8A33D; --wait-soft:#2B2214;
+}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-sans)}
+main{width:min(1480px,100%);margin:0 auto;padding:18px}
+header{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:14px}
+h1{font-size:1.35rem;margin:0 0 6px}
+.status,.chip,.mono{font-family:var(--f-mono)}
+.status{color:var(--muted);font-size:.82rem}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+select,label{background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:var(--r);padding:8px 10px;font-size:.9rem}
+label{display:flex;gap:8px;align-items:center}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line)}
+th,td{border-bottom:1px solid var(--line);padding:10px;text-align:left;vertical-align:top}
+th{font-size:.74rem;text-transform:uppercase;color:var(--muted);letter-spacing:0;font-family:var(--f-mono)}
+tr.alerta td:first-child{border-left:4px solid var(--alerta)}
+button{border:1px solid var(--line);border-radius:var(--r);background:var(--card);color:var(--ink);padding:7px 9px;cursor:pointer}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);border-radius:999px;padding:3px 7px;font-size:.76rem;white-space:nowrap}
+.chip.ok{color:var(--ok);background:var(--ok-soft)}
+.chip.wait{color:var(--wait);background:var(--wait-soft)}
+.chip.alerta{color:var(--alerta)}
+.muted{color:var(--muted)}
+.detalle{display:none;background:color-mix(in srgb,var(--card),var(--bg) 35%)}
+.detalle.open{display:table-row}
+.senal{margin:0 0 8px;padding:8px;border:1px solid var(--line);border-radius:var(--r)}
+.senal p{margin:.2rem 0}
+a{color:var(--ok-mid)}
+.empty{padding:16px;border:1px solid var(--line);background:var(--card);border-radius:var(--r)}
+@media (max-width:760px){
+  header{display:block}
+  table,thead,tbody,tr,th,td{display:block}
+  thead{display:none}
+  tr{border:1px solid var(--line);margin-bottom:10px;background:var(--card)}
+  td{border-bottom:0;padding:8px 10px}
+  td::before{content:attr(data-label);display:block;color:var(--muted);font-family:var(--f-mono);font-size:.72rem;margin-bottom:2px}
+  .detalle.open{display:block}
+}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1>Radar Operativo</h1>
+      <div class="status" id="status"></div>
+    </div>
+    <div class="status">Generado <span id="generado"></span></div>
+  </header>
+  <div class="toolbar">
+    <select id="departamento" aria-label="Departamento"><option value="">Todos los departamentos</option></select>
+    <select id="categoria" aria-label="Categoria"><option value="">Todas las necesidades</option></select>
+    <select id="procedencia" aria-label="Procedencia">
+      <option value="">Toda procedencia</option>
+      <option value="senales">Medios</option>
+      <option value="reportes">Reporte directo</option>
+      <option value="ambos">Ambos</option>
+    </select>
+    <label><input id="alerta" type="checkbox"> Solo alerta maxima</label>
+  </div>
+  <div id="empty" class="empty" hidden></div>
+  <table>
+    <thead>
+      <tr>
+        <th>Territorio</th><th>Dias</th><th>Hogares</th><th>Necesidades</th><th>Procedencia</th><th>Accion</th>
+      </tr>
+    </thead>
+    <tbody id="filas"></tbody>
+  </table>
+</main>
+<script id="datos" type="application/json">{{ datos|tojson }}</script>
+<script>
+const datos = JSON.parse(document.getElementById('datos').textContent);
+const filas = document.getElementById('filas');
+const empty = document.getElementById('empty');
+const filtros = ['departamento','categoria','procedencia','alerta'].map(id => document.getElementById(id));
+const cats = new Set(), deps = new Set();
+datos.territorios.forEach(t => { if (t.mun) deps.add(t.mun.split(',').pop().trim()); (t.necesidades||[]).forEach(c => cats.add(c)); });
+deps.forEach(d => departamento.append(new Option(d,d)));
+cats.forEach(c => categoria.append(new Option(c,c)));
+generado.textContent = datos.generado;
+status.textContent = `Vigia de Medios · ultima pasada ${datos.vigia.ultima_pasada || 'sin registro'} · ${datos.vigia.fuentes_activas} fuentes · ${datos.vigia.senales_activas} senales activas · modo ${datos.vigia.modo}`;
+function chip(txt, cls=''){ return `<span class="chip ${cls}">${txt}</span>`; }
+function esc(v){
+  return String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function pasa(t){
+  if (departamento.value && !(t.mun||'').includes(departamento.value)) return false;
+  if (categoria.value && !(t.necesidades||[]).includes(categoria.value)) return false;
+  if (alerta.checked && !t.alerta_maxima) return false;
+  const p = t.procedencia || {};
+  if (procedencia.value === 'senales' && !p.senales) return false;
+  if (procedencia.value === 'reportes' && !p.reportes) return false;
+  if (procedencia.value === 'ambos' && !(p.senales && p.reportes)) return false;
+  return true;
+}
+function render(){
+  filas.textContent = '';
+  const visibles = datos.territorios.filter(pasa);
+  empty.hidden = visibles.length > 0;
+  empty.textContent = datos.mensaje_alerta_ausencia;
+  visibles.forEach((t, i) => {
+    const p = t.procedencia || {};
+    const tr = document.createElement('tr');
+    tr.className = t.alerta_maxima ? 'alerta' : '';
+    tr.innerHTML = `
+      <td data-label="Territorio"><strong>${esc(t.nombre)}</strong><br><span class="muted">${esc(t.mun)} · ${esc(t.pcode)}</span></td>
+      <td data-label="Dias" class="mono">${t.alerta_maxima ? chip('alerta maxima','alerta') : (t.dias_sin_recepcion ?? '')}</td>
+      <td data-label="Hogares" class="mono">${esc(t.hogares_est ?? '?')}</td>
+      <td data-label="Necesidades"><div class="chips">${(t.necesidades||[]).map(c => chip(esc(c))).join('')}</div></td>
+      <td data-label="Procedencia"><div class="chips">${p.senales ? chip('medios x'+p.senales,'wait') : ''}${p.reportes ? chip('reporte directo x'+p.reportes,'ok') : ''}</div></td>
+      <td data-label="Accion"><button type="button" data-i="${i}">Detalle</button></td>`;
+    const det = document.createElement('tr');
+    det.className = 'detalle';
+    det.innerHTML = `<td colspan="6">${(t.senales||[]).map(s => `<div class="senal"><p>${esc(s.cita)}</p><p class="muted">${esc(s.fuente)} · ${esc(s.fecha || 'sin fecha')} · <a href="${esc(s.url)}" rel="noreferrer">fuente</a></p></div>`).join('') || '<span class="muted">Sin senales de medios para este territorio.</span>'}</td>`;
+    tr.querySelector('button').addEventListener('click', () => det.classList.toggle('open'));
+    filas.append(tr, det);
+  });
+}
+filtros.forEach(el => el.addEventListener('change', render));
+render();
+</script>
+</body>
+</html>

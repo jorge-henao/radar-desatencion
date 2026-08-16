@@ -1,7 +1,7 @@
 """Radar Core — app FastAPI.
 
 Optimizado para Railway: puerto por env PORT, /health como healthcheck,
-jobs (reconciliación + export + outbox) en un loop asyncio del propio proceso.
+jobs (Vigía + reconciliación + export + outbox) en un loop asyncio del propio proceso.
 """
 
 from __future__ import annotations
@@ -24,20 +24,29 @@ from .services.gazetteer import gazetteer
 log = logging.getLogger("radar_core")
 
 
-async def _loop_jobs(app: FastAPI) -> None:
+def _ciclo_jobs_sync() -> None:
     from .services.notificador import procesar_outbox
     from .services.reconciliacion import reconciliar
     from .services import export
+    from .services import vigia as svc_vigia
 
+    factory = db.session_factory()
+    with factory() as session:
+        gazetteer.refresh(session)
+        cfg = svc_vigia.cargar_config()
+        svc_vigia.caducar_senales(session, cfg.caducidad_dias)
+        svc_vigia.ejecutar_vigia(session, config=cfg)
+        reconciliar(session)
+        procesar_outbox(session)
+    export.exportar(db.engine())
+
+
+async def _loop_jobs(app: FastAPI) -> None:
     s = get_settings()
     while True:
         await asyncio.sleep(s.export_interval_seg)
         try:
-            factory = db.session_factory()
-            with factory() as session:
-                reconciliar(session)
-                procesar_outbox(session)
-            await asyncio.to_thread(export.exportar, db.engine())
+            await asyncio.to_thread(_ciclo_jobs_sync)
         except Exception:
             log.exception("fallo en ciclo de jobs; el export anterior sigue vigente")
 

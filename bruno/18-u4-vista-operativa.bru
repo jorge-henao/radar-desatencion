@@ -1,0 +1,29 @@
+meta {
+  name: 18 · U4 — Vista operativa HTML (Radar Operativo)
+  type: http
+  seq: 18
+}
+
+get {
+  url: {{base_url}}/public/vista-operativa.html
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  Vista pública de la épica 03. La genera el mismo export estático que los
+  archivos U4 clásicos, con filtros client-side y detalle expandible.
+
+  Renderiza el dataset operativo sin tocar la base de datos en request path y
+  separa procedencia:
+  - señales del Vigía de Medios
+  - reportes directos de primera mano
+  - cola de revisión de localidades no conciliadas
+
+  En modo curado o peor caso sin señales, nunca debe ser una tabla vacía sin
+  sentido: conserva territorios priorizados y la alerta por ausencia.
+}

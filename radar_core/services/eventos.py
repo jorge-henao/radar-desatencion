@@ -27,6 +27,7 @@ from ..folios import generar_folio, normalizar_folio
 from ..models import AlertaInterna, Event, Notificacion, Reconciliacion
 from ..schemas import PAYLOADS, CrearEventoRequest
 from ..security import cifrar_ref, hash_reporter
+from .vigia import convertir_senales_por_need
 
 
 def _fingerprint(tipo: str, payload: dict) -> str:
@@ -172,6 +173,8 @@ def crear_evento(session: Session, req: CrearEventoRequest) -> dict:
         corrige_folio=corrige,
     )
     session.add(evento)
+    if req.type == "need":
+        convertir_senales_por_need(session, payload["pcode"])
     try:
         session.commit()
     except IntegrityError:
