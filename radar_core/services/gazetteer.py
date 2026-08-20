@@ -178,9 +178,21 @@ class Gazetteer:
             meta[r["pcode"]] = (r["nombre"], dpto)
         self._meta = meta
 
-        # Una entrada cuyo municipio no está en el índice no se puede situar, y
-        # resolver_texto se negará a auto-resolverla. Es un problema de datos, no
-        # de request: hay que verlo al sembrar, no descubrirlo en producción.
+        # Una entrada que no se puede situar nunca resolverá: resolver_texto la
+        # filtra antes de decidir. Es un problema de datos, no de request — hay
+        # que verlo al sembrar, no descubrirlo en producción. Dos formas de
+        # estarlo: colgar de un municipio que no existe, o no colgar de ninguno
+        # (filas anteriores al guard de cargar_territorio).
+        sin_municipio = [
+            f.pcode for f in filas if f.nivel != "municipio" and not f.municipio_pcode
+        ]
+        if sin_municipio:
+            log.warning(
+                "gazetteer: %d entradas no municipales sin municipio_pcode; no "
+                "podrán resolverse por texto: %s",
+                len(sin_municipio),
+                sorted(sin_municipio)[:10],
+            )
         huerfanas = {
             f.municipio_pcode
             for f in filas
