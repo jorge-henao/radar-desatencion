@@ -16,7 +16,7 @@ auth:bearer {
 
 body:json {
   {
-    "texto": "corregimiento San Pedro, San José del Palmar"
+    "texto": "Granada, Cali"
   }
 }
 
@@ -24,6 +24,9 @@ assert {
   res.status: eq 200
   res.body.pcode: isDefined
   res.body.candidatos: isDefined
+  res.body.municipio_pcode: isDefined
+  res.body.departamento_nombre: isDefined
+  res.body.etiqueta: isDefined
 }
 
 docs {
@@ -31,4 +34,13 @@ docs {
   posiblemente sucia. Resuelve contra el gazetteer con fuzzy match. Si
   confianza < umbral, candidatos[] trae las opciones para que el agente
   desambigüe antes de crear el evento.
+
+  Toda ubicación (la respuesta y cada candidato) trae su procedencia:
+  municipio_pcode, municipio_nombre, departamento_codigo, departamento_nombre
+  y etiqueta — el string que el agente lee tal cual al repreguntar, para no
+  componer la procedencia él mismo.
+
+  motivo distingue por qué no se resolvió: "ambiguo" (dos candidatos parejos),
+  "confianza_baja" (hay candidatos pero ninguno alcanza el piso — el relleno de
+  voz cae acá), "sin_candidatos", "fuera_de_cobertura" (solo modo pin).
 }

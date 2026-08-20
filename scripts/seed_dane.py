@@ -33,6 +33,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from radar_core import db, ddl  # noqa: E402
 from radar_core.seed.loader import cargar_gazetteer, cargar_territorio  # noqa: E402
+from radar_core.services.gazetteer import titulo_es  # noqa: E402
 
 RAIZ = Path(__file__).resolve().parent.parent
 DATA = RAIZ / "data" / "dane"
@@ -121,9 +122,9 @@ def cargar_municipios(session, priorizados: dict) -> None:
         cargar_territorio(
             session,
             pcode=pcode,
-            nombre=str(rec["mpio_cnmbr"]).strip().title(),
+            nombre=titulo_es(str(rec["mpio_cnmbr"])),
             nivel="municipio",
-            departamento=str(rec["dpto_cnmbr"]).strip().title(),
+            departamento=titulo_es(str(rec["dpto_cnmbr"])),
             geometria=geom,
             poblacion_estimada=cur.get("poblacion_estimada") if cur else None,
             factor_accesibilidad=cur.get("factor_accesibilidad", 1.0) if cur else 1.0,
@@ -141,7 +142,7 @@ def cargar_municipios(session, priorizados: dict) -> None:
         rec = dict(zip(campos, sr))
         cargar_gazetteer(
             session,
-            nombre=str(rec["mpio_cnmbr"]).strip().title(),
+            nombre=titulo_es(str(rec["mpio_cnmbr"])),
             pcode=str(rec["mpio_cdpmp"]).strip(),
             nivel="municipio",
         )
@@ -201,7 +202,7 @@ def cargar_veredas(session, priorizados: dict) -> None:
         if n == 0:
             _verificar_crs(shp, geom)
         pcode = f"V{str(rec['CODIGO_VER']).strip()}"
-        nombre = str(rec["NOMBRE_VER"]).strip().title()
+        nombre = titulo_es(str(rec["NOMBRE_VER"]))
         cur = priorizados[mpio]
         cargar_territorio(
             session,

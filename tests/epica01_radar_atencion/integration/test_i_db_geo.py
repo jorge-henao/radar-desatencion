@@ -16,7 +16,7 @@ from tests.conftest import (
     insertar_evento_directo,
 )
 from radar_core.seed.loader import cargar_territorio
-from radar_core.services.geo import resolver_pin
+from radar_core.services.geo import resolver_pin, resolver_texto
 
 pytestmark = pytest.mark.integration
 
@@ -109,6 +109,60 @@ class TestResolucionGeo:
         assert r["pcode"] is None
         assert r["motivo"] == "fuera_de_cobertura"
         assert r["candidatos"] == []
+
+    def test_i13_toda_ubicacion_resuelta_trae_su_procedencia(self, db):
+        """Invariante: si hay pcode, hay municipio. Un municipio es su propio municipio.
+
+        Vale para la respuesta y para cada candidato, en los dos modos. Sin esto
+        el agente recibe "La Pedrera, vereda" sin poder decir de qué municipio,
+        que es justo lo único que sirve para desambiguar por voz.
+        """
+        respuestas = [
+            resolver_pin(db, **PIN_JAMUNDI),      # municipio: se apunta a sí mismo
+            resolver_pin(db, **PIN_POTRERITO),    # centro poblado
+            resolver_pin(db, **PIN_SAN_PEDRO),
+            resolver_texto("La Cabaña, Jamundí"),  # vereda por texto
+            resolver_texto("Jamundí"),
+        ]
+        for r in respuestas:
+            assert r["pcode"] is not None, r
+            for u in [r] + r["candidatos"]:
+                assert u["municipio_pcode"], f"sin municipio: {u}"
+                assert u["municipio_nombre"], f"sin nombre de municipio: {u}"
+                assert u["departamento_nombre"], f"sin departamento: {u}"
+                assert u["departamento_codigo"] == u["municipio_pcode"][:2]
+                assert u["etiqueta"] and u["nombre_oficial"] in u["etiqueta"]
+
+    def test_i13_un_municipio_es_su_propio_municipio(self, db):
+        r = resolver_pin(db, **PIN_JAMUNDI)
+        assert r["nivel"] == "municipio"
+        assert r["municipio_pcode"] == r["pcode"] == "76364"
+        assert r["municipio_nombre"] == "Jamundí"
+
+    def test_i13_sin_ubicacion_la_procedencia_va_entera_en_null(self, db):
+        """Nunca a medias: no existe departamento poblado con municipio en null."""
+        for r in (resolver_pin(db, **PIN_MAR), resolver_texto("asdfgh qwerty"),
+                  resolver_texto("La Cabaña")):
+            assert r["pcode"] is None
+            assert r["municipio_pcode"] is None
+            assert r["municipio_nombre"] is None
+            assert r["departamento_codigo"] is None
+            assert r["departamento_nombre"] is None
+            assert r["etiqueta"] is None
+
+    def test_i14_pin_y_texto_coinciden_para_el_mismo_territorio(self, db):
+        """Los dos modos leen de fuentes distintas y deben converger.
+
+        Pin resuelve contra geo_divipola; texto contra el índice en memoria del
+        gazetteer. Si divergen, el mismo lugar tiene dos procedencias según cómo
+        se pregunte.
+        """
+        por_pin = resolver_pin(db, **PIN_SAN_PEDRO)
+        por_texto = resolver_texto("corregimiento San Pedro")
+        assert por_pin["pcode"] == por_texto["pcode"] == "27660C01"
+        for campo in ("municipio_pcode", "municipio_nombre",
+                      "departamento_codigo", "departamento_nombre"):
+            assert por_pin[campo] == por_texto[campo], campo
 
     def test_i15_priorizado_sin_eventos_en_alerta(self, db):
         from radar_core import ddl

@@ -104,20 +104,37 @@ class ResolverUbicacionRequest(BaseModel):
         return self
 
 
-class Candidato(BaseModel):
+class Procedencia(BaseModel):
+    """Dónde queda una ubicación, sin que el agente tenga que inferirlo (I-13).
+
+    `municipio_pcode` nunca es null cuando hay ubicación: un municipio es su
+    propio municipio. `etiqueta` es el string que el agente puede leer tal cual
+    al repreguntar — existe para que el LLM no componga la procedencia él mismo.
+    """
+
+    municipio_pcode: str | None = None
+    municipio_nombre: str | None = None
+    departamento_codigo: str | None = None
+    departamento_nombre: str | None = None
+    etiqueta: str | None = None
+
+
+class Candidato(Procedencia):
     pcode: str
     nombre_oficial: str
     nivel: str
     confianza: float
 
 
-class ResolverUbicacionResponse(BaseModel):
+class ResolverUbicacionResponse(Procedencia):
     pcode: str | None
     nivel: str | None
     nombre_oficial: str | None
     confianza: float
     candidatos: list[Candidato] = []
-    motivo: str | None = None  # ej. "fuera_de_cobertura" (I-12)
+    # "fuera_de_cobertura" (I-12) · "sin_candidatos" (U-54) · "ambiguo" (U-51)
+    # · "confianza_baja" (U-57): hubo candidatos pero ninguno alcanza el piso.
+    motivo: str | None = None
 
 
 class ConsultarFolioResponse(BaseModel):

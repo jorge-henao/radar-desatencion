@@ -6,7 +6,9 @@ Requiere el PostGIS de pruebas: ./scripts/dev_db.sh
 
 from __future__ import annotations
 
+import csv
 import datetime as dt
+import pathlib
 import uuid
 
 import pytest
@@ -173,6 +175,45 @@ def geo_semilla(engine):
         s.commit()
         gazetteer.refresh(s)
     return True
+
+
+FIXTURES = pathlib.Path(__file__).parent / "fixtures"
+
+# Ya sembrados por geo_semilla: cargarlos otra vez duplicaría entradas y el
+# cleanup del catálogo denso borraría las del storyboard.
+_YA_EN_SEMILLA = {"76364", "27660", "76828"}
+
+
+@pytest.fixture()
+def catalogo_denso(db):
+    """416 nombres reales de municipios DANE (U-56/U-57).
+
+    Los falsos positivos del match por texto son un fenómeno de densidad: el
+    residuo "rio" contra el fixture de 8 entradas del storyboard da 0.60 con
+    Riofrío; contra el catálogo real da 0.84 con Río Iró, y otras doce frases
+    de puro relleno resuelven. Medir precisión contra el seed sintético no
+    prueba nada — de ahí este fixture con nombres reales.
+    """
+    insertados = []
+    with (FIXTURES / "municipios_muestra.csv").open(encoding="utf-8") as f:
+        for fila in csv.DictReader(f):
+            if fila["pcode"] in _YA_EN_SEMILLA:
+                continue
+            cargar_territorio(
+                db, pcode=fila["pcode"], nombre=fila["nombre"], nivel="municipio",
+                departamento=fila["departamento"], geometria=None,
+            )
+            cargar_gazetteer(db, nombre=fila["nombre"], pcode=fila["pcode"], nivel="municipio")
+            insertados.append(fila["pcode"])
+    db.commit()
+    gazetteer.refresh(db)
+    try:
+        yield insertados
+    finally:
+        db.execute(text("DELETE FROM gazetteer WHERE pcode = ANY(:p)"), {"p": insertados})
+        db.execute(text("DELETE FROM geo_divipola WHERE pcode = ANY(:p)"), {"p": insertados})
+        db.commit()
+        gazetteer.refresh(db)
 
 
 @pytest.fixture()
