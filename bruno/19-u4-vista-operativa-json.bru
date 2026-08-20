@@ -1,0 +1,23 @@
+meta {
+  name: 19 · U4 — Vista operativa JSON
+  type: http
+  seq: 19
+}
+
+get {
+  url: {{base_url}}/public/vista-operativa.json
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+  res.body.vigia.modo: isDefined
+  res.body.territorios: isDefined
+  res.body.revision: isDefined
+}
+
+docs {
+  Dataset público de la vista operativa. Contrato principal para verificar
+  procedencia, señales, reportes directos y sección de revisión.
+}

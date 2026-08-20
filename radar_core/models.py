@@ -125,3 +125,63 @@ class AlertaInterna(Base):
     tipo: Mapped[str] = mapped_column(String(48))
     detalle: Mapped[dict] = mapped_column(JSONB, default=dict)
     created_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class SenalMedio(Base):
+    """Señales curadas por el Vigía: evidencias de medios, fuera del log append-only."""
+
+    __tablename__ = "senales_medios"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    pcode: Mapped[str | None] = mapped_column(String(24), index=True)
+    localidad_texto: Mapped[str] = mapped_column(Text)
+    categorias: Mapped[list[str]] = mapped_column(JSONB)
+    cita: Mapped[str] = mapped_column(Text)
+    url: Mapped[str] = mapped_column(Text)
+    fuente_id: Mapped[str] = mapped_column(String(80), index=True)
+    fuente_nombre: Mapped[str] = mapped_column(Text)
+    fuentes: Mapped[list[dict]] = mapped_column(JSONB, default=list)
+    confianza: Mapped[float] = mapped_column(Float)
+    fecha_pub: Mapped[dt.date | None] = mapped_column()
+    detectada_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), index=True)
+    refuerzos: Mapped[int] = mapped_column(Integer, default=1)
+    estado: Mapped[str] = mapped_column(String(24), default="activa", index=True)
+    descartada_por: Mapped[str | None] = mapped_column(Text)
+
+
+class LocalidadPorIncorporar(Base):
+    """Cola humana para localidades que el Vigía no puede publicar sin pcode confiable."""
+
+    __tablename__ = "localidades_por_incorporar"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    senal_id: Mapped[uuid.UUID | None] = mapped_column(index=True)
+    localidad_texto: Mapped[str] = mapped_column(Text, index=True)
+    candidatos: Mapped[list[dict]] = mapped_column(JSONB, default=list)
+    estado: Mapped[str] = mapped_column(String(24), default="pendiente", index=True)
+    created_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class VigiaRun(Base):
+    """Auditoría de pasadas del Vigía de Medios."""
+
+    __tablename__ = "vigia_runs"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    started_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), index=True)
+    finished_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
+    estado: Mapped[str] = mapped_column(String(24), default="ok", index=True)
+    resumen: Mapped[dict] = mapped_column(JSONB, default=dict)
+
+
+class VigiaDocumento(Base):
+    """Contenido ya procesado por el Vigía para evitar costo LLM repetido."""
+
+    __tablename__ = "vigia_documentos"
+    __table_args__ = (UniqueConstraint("url", "contenido_hash", name="uq_vigia_documentos_url_hash"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    url: Mapped[str] = mapped_column(Text, index=True)
+    contenido_hash: Mapped[str] = mapped_column(String(64), index=True)
+    fuente_id: Mapped[str] = mapped_column(String(80), index=True)
+    procesado_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

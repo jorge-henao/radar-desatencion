@@ -16,6 +16,8 @@ auth:bearer {
 
 assert {
   res.status: eq 200
+  res.body.vigia.modo: isDefined
+  res.body.vigia.run_id: isDefined
   res.body.reconciliacion.deterministicos: gte 1
 }
 
@@ -23,7 +25,8 @@ docs {
   Dispara a demanda el ciclo que en producción corre cada 5 minutos:
   1. Reconciliación DS↔RC (acá cruza el despacho del paso 04 con la recepción
      del paso 10, match determinístico por folio citado).
-  2. Outbox de notificaciones (comprobante_listo hacia la plataforma — en dev
+  2. Vigía de Medios: mantenimiento de señales (caducidad) y auditoría de pasada.
+  3. Outbox de notificaciones (comprobante_listo hacia la plataforma — en dev
      el host de notify no existe, así que quedará "fallida"; es esperado).
-  3. Export estático (tabla.html, datos.csv, datos.geojson).
+  4. Export estático (tabla.html, datos.csv, datos.geojson, vista-operativa.json).
 }

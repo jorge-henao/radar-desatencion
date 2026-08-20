@@ -1,0 +1,25 @@
+vigia:
+  activo: true
+  cadencia_horas: 2
+  caducidad_dias: 1
+  # El proveedor LLM, modelo y API keys NO viven en YAML.
+  # Configurar por entorno:
+  # RADAR_VIGIA_LLM_PROVIDER=openai
+  # RADAR_VIGIA_LLM_MODEL=gpt-5-mini
+  # RADAR_OPENAI_API_KEY=... o RADAR_ANTHROPIC_API_KEY=...
+  terminos_busqueda:
+    - "ayuda humanitaria {departamento}"
+    - "damnificados sin ayuda"
+  fuentes:
+    - id: eltiempo
+      url: https://www.elespectador.com/
+      tipo: medio
+      confianza: 0.8
+      activa: true
+    - id: cuidar_colombia
+      url: https://cuidarcolombia.vercel.app
+      tipo: agregador_verificado
+      confianza: 0.85
+      activa: true
+vista_operativa:
+  modo: curado

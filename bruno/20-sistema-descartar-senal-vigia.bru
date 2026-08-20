@@ -1,0 +1,34 @@
+meta {
+  name: 20 · Sistema — Descartar señal del Vigía
+  type: http
+  seq: 20
+}
+
+post {
+  url: {{base_url}}/internal/senales/{{senal_id}}/descartar
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "operador": "cmgrd-demo"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.ok: isDefined
+}
+
+docs {
+  Descarte humano auditable de una señal del Vigía marcada como falso positivo.
+  Requiere token interno y un UUID real de senales_medios en {{senal_id}}.
+
+  Si {{senal_id}} no existe o no es UUID válido, responde 200 con {"ok": false};
+  no debe romper la operación ni filtrar detalles internos.
+}

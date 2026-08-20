@@ -40,6 +40,26 @@ PIN_POTRERITO = {"lat": 3.22, "lon": -76.57}
 PIN_MAR = {"lat": 2.0, "lon": -80.0}
 
 
+# La carpeta define la épica y la clase de prueba; el marker se deriva de la
+# ruta para poder filtrar con `pytest -m epica01` / `-m e2e` sin repetirlo
+# en cada archivo. Los markers de tipo (unit/integration/...) siguen viviendo
+# como `pytestmark` dentro de cada módulo.
+_MARKERS_POR_CARPETA = {
+    "epica01_radar_atencion": "epica01",
+    "epica02_radar_ciudadano": "epica02",
+    "epica03_radar_operativo": "epica03",
+    "e2e": "e2e",
+}
+
+
+def pytest_collection_modifyitems(items):
+    for item in items:
+        partes = item.path.parts
+        for carpeta, marker in _MARKERS_POR_CARPETA.items():
+            if carpeta in partes:
+                item.add_marker(getattr(pytest.mark, marker))
+
+
 def _cuadro(lon0, lat0, lon1, lat1) -> dict:
     return {
         "type": "Polygon",
@@ -160,7 +180,12 @@ def db(engine, geo_semilla):
     """Sesión limpia por test: trunca todo lo transaccional (los seeds geo quedan)."""
     factory = db_mod.session_factory()
     with factory() as s:
-        s.execute(text("TRUNCATE events, reconciliaciones, notificaciones, alertas_internas"))
+        s.execute(
+            text(
+                "TRUNCATE events, reconciliaciones, notificaciones, alertas_internas, "
+                "senales_medios, localidades_por_incorporar, vigia_runs, vigia_documentos"
+            )
+        )
         s.commit()
     rate_limiter.reset()
     with factory() as s:
@@ -228,6 +253,11 @@ def insertar_evento_directo(
     """Inserta un evento con created_at en el pasado (INSERT permitido; UPDATE no)."""
     from radar_core.folios import generar_folio
 
+    # created_at se calcula con el reloj de la DB, no con el del host: las MVs
+    # hacen floor() por días contra now() de Postgres, y `hace_dias` exactos
+    # caen en la frontera — con dos relojes (el contenedor puede ir ms detrás
+    # del host) el resultado se voltea de forma intermitente.
+    ahora_db = session.execute(text("SELECT now()")).scalar()
     f = folio or generar_folio(session, tipo)
     session.add(
         Event(
@@ -239,7 +269,7 @@ def insertar_evento_directo(
             idempotency_key=f"directo-{uuid.uuid4()}",
             payload_fingerprint=f"fp-{uuid.uuid4()}",
             cita_folio=cita_folio,
-            created_at=dt.datetime.now(dt.UTC) - dt.timedelta(days=hace_dias),
+            created_at=ahora_db - dt.timedelta(days=hace_dias),
         )
     )
     if con_ancla:

@@ -43,6 +43,11 @@ class Settings(BaseSettings):
 
     export_dir: str = Field(default="./var/public")
     actas_dir: str = Field(default="./var/actas")
+    vigia_config_path: str = Field(default="./vigia.yaml")
+    vigia_llm_provider: str = Field(default="openai")
+    vigia_llm_model: str = Field(default="gpt-4.1-mini")
+    openai_api_key: str = Field(default="")
+    anthropic_api_key: str = Field(default="")
 
     # Umbrales de dominio
     umbral_confianza_geo: float = Field(default=0.80)

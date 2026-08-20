@@ -1,0 +1,27 @@
+meta {
+  name: 21 · Sistema — Run jobs forzando Vigía
+  type: http
+  seq: 21
+}
+
+post {
+  url: {{base_url}}/internal/run_jobs?forzar_vigia=true
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.vigia.run_id: isDefined
+  res.body.vigia.forzado: eq true
+  res.body.export.territorios: gte 1
+}
+
+docs {
+  Reintenta el Vigía aunque exista una pasada reciente dentro de la cadencia.
+  Útil después de corregir RADAR_VIGIA_LLM_MODEL o la API key en .env.
+}

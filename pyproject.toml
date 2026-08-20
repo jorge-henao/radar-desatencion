@@ -36,6 +36,10 @@ markers = [
     "service: pruebas de servicio/contrato (S)",
     "performance: pruebas de performance (P)",
     "transversal: seguridad y privacidad (X)",
+    "e2e: punta a punta del sistema completo (E/S-4x)",
+    "epica01: Radar de Atención (core)",
+    "epica02: Radar Ciudadano (componentes 9-11)",
+    "epica03: Radar Operativo (componentes 12-14)",
 ]
 timeout = 600
 
