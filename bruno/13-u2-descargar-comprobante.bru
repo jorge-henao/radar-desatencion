@@ -10,6 +10,16 @@ get {
   auth: none
 }
 
+script:pre-request {
+  // A diferencia del acta, el comprobante exige un despacho YA reconciliado con
+  // su recepción — eso lo producen los pasos 10 y 11, no se puede fabricar en
+  // una sola llamada. Corriendo esto suelto se usa un par ya reconciliado de la
+  // base de desarrollo; si no existe, corré la colección completa.
+  if (!bru.getVar("folio_despacho")) {
+    bru.setVar("folio_despacho", bru.getEnvVar("folio_comprobante_demo"));
+  }
+}
+
 assert {
   res.status: eq 200
   res.headers['content-type']: eq application/pdf
