@@ -188,8 +188,9 @@ class TestResolucionGeo:
         assert r["pcode"] == "76364", "debe ganar el municipio, no la vereda huérfana"
         assert r["nivel"] == "municipio"
         assert r["municipio_nombre"] == "Jamundí"
-        assert "HUERFANA-01" in {c["pcode"] for c in r["candidatos"]}, (
-            "la huérfana sigue visible como candidato; lo que no puede es ser la respuesta"
+        assert "HUERFANA-01" not in {c["pcode"] for c in r["candidatos"]}, (
+            "tampoco puede ofrecerse como candidato: si el agente lo eligiera, "
+            "crearía un evento con un pcode que no puede situar"
         )
 
     def test_i13_sin_ningun_candidato_situable_no_se_resuelve(self, db, territorio_huerfano):
@@ -197,7 +198,8 @@ class TestResolucionGeo:
         r = resolver_pin(db, lat=1.05, lon=-70.05)
         assert r["pcode"] is None
         assert r["motivo"] == "procedencia_incompleta"
-        assert r["candidatos"], "el agente ve qué se tocó, aunque no sea usable"
+        assert r["candidatos"] == [], "ofrecer una opción inusable es peor que no ofrecer ninguna"
+        assert r["motivo"] != "fuera_de_cobertura", "se tocó un polígono; el problema es otro"
 
     def test_i13_texto_no_resuelve_a_un_municipio_que_no_existe(self, db):
         """El índice de municipios puede quedarse corto (seed parcial, refresh a
@@ -212,7 +214,8 @@ class TestResolucionGeo:
             r = resolver_texto("Villa Fantasma")
             assert r["pcode"] is None
             assert r["motivo"] == "procedencia_incompleta"
-            assert r["candidatos"][0]["pcode"] == "99999V01"
+            assert r["candidatos"] == []
+            assert "99999V01" not in {c["pcode"] for c in r["candidatos"]}
         finally:
             db.execute(text("DELETE FROM gazetteer WHERE pcode = '99999V01'"))
             db.commit()

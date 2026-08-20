@@ -186,6 +186,15 @@ class Gazetteer:
             for f in filas
             if f.municipio_pcode and f.municipio_pcode not in meta
         }
+        sin_dpto = sorted(pc for pc, (_, d) in meta.items() if not d)
+        if sin_dpto:
+            log.warning(
+                "gazetteer: %d municipios sin departamento en geo_divipola; las "
+                "ubicaciones que cuelgan de ellos saldrán con departamento_nombre "
+                "en null: %s",
+                len(sin_dpto),
+                sin_dpto[:10],
+            )
         if huerfanas:
             log.warning(
                 "gazetteer: %d municipios referenciados sin fila en geo_divipola "

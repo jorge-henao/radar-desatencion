@@ -98,15 +98,7 @@ def resolver_pin(session: Session, lat: float, lon: float) -> dict:
     # del municipio, así que la respuesta pierde precisión, no validez.
     completos = [c for c in candidatos if _tiene_procedencia(c)]
     if not completos:
-        return {
-            "pcode": None,
-            "nivel": None,
-            "nombre_oficial": None,
-            **_VACIO,
-            "confianza": 0.0,
-            "candidatos": candidatos,
-            "motivo": "procedencia_incompleta",
-        }
+        return _sin_ubicacion("procedencia_incompleta")
     mejor = completos[0]
     return {
         "pcode": mejor["pcode"],
@@ -118,16 +110,23 @@ def resolver_pin(session: Session, lat: float, lon: float) -> dict:
         "departamento_nombre": mejor["departamento_nombre"],
         "etiqueta": mejor["etiqueta"],
         "confianza": 1.0,
-        "candidatos": completos + [c for c in candidatos if not _tiene_procedencia(c)],
+        "candidatos": completos,
         "motivo": None,
     }
 
 
 def resolver_texto(texto: str) -> dict:
     settings = get_settings()
-    candidatos = gazetteer.buscar(texto)
-    if not candidatos:
+    crudos = gazetteer.buscar(texto)
+    if not crudos:
         return _sin_ubicacion("sin_candidatos")
+    # Un candidato que no se puede situar no se ofrece: si el agente lo eligiera,
+    # crearía un evento con un pcode del que no puede decir dónde queda — el
+    # agujero que este contrato existe para cerrar. Se filtra ANTES de decidir,
+    # así que un segundo candidato sano puede ganar cuando el primero está roto.
+    candidatos = [c for c in crudos if _tiene_procedencia(c)]
+    if not candidatos:
+        return _sin_ubicacion("procedencia_incompleta")
     mejor = candidatos[0]
     # score 1.0 solo ocurre con identidad de tokens ("match exacto"). Un exacto
     # único no es ambiguo aunque haya vecinos fuzzy cerca ("San José del Palmar"
@@ -179,21 +178,6 @@ def resolver_texto(texto: str) -> dict:
             "confianza": round(min(mejor["confianza"], settings.umbral_confianza_geo - 0.01), 3),
             "candidatos": candidatos,
             "motivo": "confianza_baja",
-        }
-
-    # El índice de municipios puede quedarse corto (seed parcial, gazetteer más
-    # completo que geo_divipola, refresh a destiempo). Degradar en silencio a
-    # municipio_nombre=None daría un pcode que el agente no puede situar: mejor
-    # ofrecerlo como candidato y decir por qué no se resolvió.
-    if not _tiene_procedencia(mejor):
-        return {
-            "pcode": None,
-            "nivel": None,
-            "nombre_oficial": None,
-            **_VACIO,
-            "confianza": round(min(mejor["confianza"], settings.umbral_confianza_geo - 0.01), 3),
-            "candidatos": candidatos,
-            "motivo": "procedencia_incompleta",
         }
 
     return {
