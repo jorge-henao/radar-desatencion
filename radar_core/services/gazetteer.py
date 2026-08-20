@@ -12,6 +12,7 @@ columna nueva ni una query extra en el request path.
 
 from __future__ import annotations
 
+import logging
 import re
 import unicodedata
 from dataclasses import dataclass
@@ -22,6 +23,8 @@ from sqlalchemy.orm import Session
 
 from ..config import get_settings
 from ..models import GazetteerEntry
+
+log = logging.getLogger("radar_core")
 
 # Palabras de relleno del habla regional que no aportan al match.
 #
@@ -174,6 +177,22 @@ class Gazetteer:
             dpto = titulo_es(r["departamento"]) if r["departamento"] else None
             meta[r["pcode"]] = (r["nombre"], dpto)
         self._meta = meta
+
+        # Una entrada cuyo municipio no está en el índice no se puede situar, y
+        # resolver_texto se negará a auto-resolverla. Es un problema de datos, no
+        # de request: hay que verlo al sembrar, no descubrirlo en producción.
+        huerfanas = {
+            f.municipio_pcode
+            for f in filas
+            if f.municipio_pcode and f.municipio_pcode not in meta
+        }
+        if huerfanas:
+            log.warning(
+                "gazetteer: %d municipios referenciados sin fila en geo_divipola "
+                "(las entradas que cuelgan de ellos no podrán resolverse): %s",
+                len(huerfanas),
+                sorted(huerfanas)[:10],
+            )
 
     def procedencia(
         self, pcode: str, nivel: str, nombre_oficial: str, municipio_pcode: str | None

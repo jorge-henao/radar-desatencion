@@ -153,6 +153,8 @@ completos de la especificación. Los IDs de esta suite van en los nombres de cad
 | I-11 | P1 | Pin en frontera entre polígonos / dentro de centro poblado | Resuelve al nivel más específico (`centro_poblado` sobre `municipio`) |
 | I-12 | P1 | Pin fuera de Colombia o en el mar | Respuesta estructurada "fuera de cobertura", nunca 500 |
 | I-13 | P0 | Procedencia de toda ubicación resuelta, en ambos modos | Si hay `pcode` hay `municipio_pcode` + `departamento_*`; un municipio es su propio municipio; sin ubicación, la procedencia va entera en null |
+| I-13b | P0 | Pin sobre territorio sin municipio (filas heredadas del pre-guard) | Degrada al nivel más específico con procedencia; si ninguno la tiene, `motivo: "procedencia_incompleta"` — nunca un pcode que el agente no pueda situar |
+| I-13c | P0 | Texto que resuelve a un municipio ausente del índice (seed parcial) | No auto-resuelve; el candidato se ofrece con `motivo: "procedencia_incompleta"` |
 | I-14 | P1 | Mismo territorio por pin y por texto | Idénticos `municipio_*` y `departamento_*` — las dos fuentes (PostGIS y el índice en memoria) no pueden divergir |
 | I-15 | P0 | Refresh de `mv_desatencion` con territorio priorizado sin eventos | El pcode aparece con `alerta_maxima` |
 

@@ -57,7 +57,7 @@ POST /tools/resolver_ubicacion
          etiqueta,                        ← string hablable, listo para repreguntar
          confianza, candidatos[],         ← cada candidato lleva los mismos campos
          motivo }                         ← ambiguo | confianza_baja | sin_candidatos
-                                            | fuera_de_cobertura
+                                            | fuera_de_cobertura | procedencia_incompleta
 
 POST /tools/crear_evento
   in:  { type: need|dispatch|receipt, payload: {...}, reporter_ref, idempotency_key }
@@ -87,7 +87,7 @@ Autenticación: token de workspace. Los errores de validación se devuelven **es
 10. **Audio sin consentimiento explícito jamás es público** (épica 02). El flag de consentimiento es regla dura; sin él, el audio queda solo como evidencia privada del despachador reconciliado. Lili Analyze se consume **exclusivamente por su API de solo lectura** — nunca Elasticsearch/S3 directo, y el Radar nunca invoca el análisis.
 11. **El front no inventa — renderiza** (épicas 02/03). Todo string visible proviene del JSON del export, de las plantillas taxativas (P1–P8) o del microcopy fijo (M0–M7) de la spec del front. Prohibido inferir personas, causas, citas o cifras que no estén en los datos.
 12. **El Vigía nunca degrada la alerta por ausencia.** Territorio sin eventos NI señales sigue siendo alerta máxima — las señales de medios elevan visibilidad, no reemplazan el silencio como dato.
-13. **Toda ubicación resuelta viaja con su procedencia, y nunca se resuelve sin certeza.** Si hay `pcode` hay `municipio_pcode` (un municipio es su propio municipio) y `confianza >= umbral_confianza_geo`. Por debajo del piso se devuelven `candidatos[]` con `motivo` — jamás un pcode adivinado. El piso se escala con la longitud del texto útil: un residuo corto ("rio") hace match alto con cualquier nombre corto sin que el hablante haya nombrado lugar alguno.
+13. **Toda ubicación resuelta viaja con su procedencia, y nunca se resuelve sin certeza.** Si hay `pcode` hay `municipio_pcode` (un municipio es su propio municipio) y `confianza >= umbral_confianza_geo`. Por debajo del piso se devuelven `candidatos[]` con `motivo` — jamás un pcode adivinado. Tampoco se resuelve a un territorio que no se puede situar (municipio inexistente o `municipio_pcode` NULL heredado de seeds viejos): por pin se degrada al nivel más específico que sí tenga procedencia, y si ninguno la tiene, `motivo: "procedencia_incompleta"`. El piso se escala con la longitud del texto útil: un residuo corto ("rio") hace match alto con cualquier nombre corto sin que el hablante haya nombrado lugar alguno.
 
 ## Modelo de datos
 

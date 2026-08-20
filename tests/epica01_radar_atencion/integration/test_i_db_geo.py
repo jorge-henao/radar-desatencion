@@ -15,7 +15,8 @@ from tests.conftest import (
     crear_evento,
     insertar_evento_directo,
 )
-from radar_core.seed.loader import cargar_territorio
+from radar_core.seed.loader import cargar_gazetteer, cargar_territorio
+from radar_core.services.gazetteer import gazetteer
 from radar_core.services.geo import resolver_pin, resolver_texto
 
 pytestmark = pytest.mark.integration
@@ -85,6 +86,31 @@ class TestAppendOnlyEnDB:
         assert n == 1, "el constraint único en DB es la garantía, no el check de aplicación"
 
 
+@pytest.fixture()
+def territorio_huerfano(db):
+    """Veredas con municipio_pcode NULL, insertadas por SQL directo.
+
+    `cargar_territorio` ya las rechaza — por eso van por SQL: representan lo que
+    quedó en las bases de antes del guard, que es donde el invariante se rompe.
+    """
+    db.execute(
+        text(
+            """
+            INSERT INTO geo_divipola (pcode, nombre, nivel, departamento, municipio_pcode, geom, factor_accesibilidad, priorizado)
+            VALUES
+              ('HUERFANA-01', 'Ladera Sin Municipio', 'vereda', 'Valle del Cauca', NULL,
+               ST_Multi(ST_GeomFromText('POLYGON((-76.60 3.30, -76.58 3.30, -76.58 3.32, -76.60 3.32, -76.60 3.30))', 4326)), 1.0, false),
+              ('HUERFANA-02', 'Islote Sin Municipio', 'vereda', NULL, NULL,
+               ST_Multi(ST_GeomFromText('POLYGON((-70.10 1.00, -70.00 1.00, -70.00 1.10, -70.10 1.10, -70.10 1.00))', 4326)), 1.0, false)
+            """
+        )
+    )
+    db.commit()
+    yield
+    db.execute(text("DELETE FROM geo_divipola WHERE pcode LIKE 'HUERFANA-%'"))
+    db.commit()
+
+
 class TestResolucionGeo:
     def test_i10_pin_en_municipio(self, db):
         r = resolver_pin(db, **PIN_JAMUNDI)
@@ -149,6 +175,48 @@ class TestResolucionGeo:
             assert r["departamento_codigo"] is None
             assert r["departamento_nombre"] is None
             assert r["etiqueta"] is None
+
+    def test_i13_pin_sobre_territorio_huerfano_degrada_al_municipio(self, db, territorio_huerfano):
+        """Una vereda sin municipio no puede ser la respuesta, ni siquiera por pin.
+
+        Filas así existen: el guard del loader solo frena las nuevas, y la base
+        de desarrollo tiene diez veredas DEMO-* con municipio_pcode NULL. El pin
+        cae también en el polígono de Jamundí, así que se degrada a municipio —
+        se pierde precisión, no validez.
+        """
+        r = resolver_pin(db, lat=3.31, lon=-76.59)
+        assert r["pcode"] == "76364", "debe ganar el municipio, no la vereda huérfana"
+        assert r["nivel"] == "municipio"
+        assert r["municipio_nombre"] == "Jamundí"
+        assert "HUERFANA-01" in {c["pcode"] for c in r["candidatos"]}, (
+            "la huérfana sigue visible como candidato; lo que no puede es ser la respuesta"
+        )
+
+    def test_i13_sin_ningun_candidato_situable_no_se_resuelve(self, db, territorio_huerfano):
+        """Si NADA en el punto tiene procedencia, se dice, no se inventa."""
+        r = resolver_pin(db, lat=1.05, lon=-70.05)
+        assert r["pcode"] is None
+        assert r["motivo"] == "procedencia_incompleta"
+        assert r["candidatos"], "el agente ve qué se tocó, aunque no sea usable"
+
+    def test_i13_texto_no_resuelve_a_un_municipio_que_no_existe(self, db):
+        """El índice de municipios puede quedarse corto (seed parcial, refresh a
+        destiempo). Un pcode que el agente no puede situar no es una respuesta."""
+        cargar_gazetteer(
+            db, nombre="Villa Fantasma", pcode="99999V01", nivel="vereda",
+            municipio_pcode="99999",  # no existe en geo_divipola ni en el gazetteer
+        )
+        db.commit()
+        gazetteer.refresh(db)
+        try:
+            r = resolver_texto("Villa Fantasma")
+            assert r["pcode"] is None
+            assert r["motivo"] == "procedencia_incompleta"
+            assert r["candidatos"][0]["pcode"] == "99999V01"
+        finally:
+            db.execute(text("DELETE FROM gazetteer WHERE pcode = '99999V01'"))
+            db.commit()
+            gazetteer.refresh(db)
 
     def test_i14_pin_y_texto_coinciden_para_el_mismo_territorio(self, db):
         """Los dos modos leen de fuentes distintas y deben converger.

@@ -51,6 +51,11 @@ _SQL_PIN = text(
 )
 
 
+def _tiene_procedencia(u: dict) -> bool:
+    """El contrato promete municipio; sin nombre de municipio no sirve para repreguntar."""
+    return bool(u.get("municipio_pcode") and u.get("municipio_nombre"))
+
+
 def _sin_ubicacion(motivo: str) -> dict:
     return {
         "pcode": None,
@@ -85,7 +90,24 @@ def resolver_pin(session: Session, lat: float, lon: float) -> dict:
         }
 
     candidatos = [candidato(f) for f in filas]
-    mejor = candidatos[0]
+    # El LEFT JOIN no falla cerrado: una fila no municipal cuyo municipio no
+    # exista (o que tenga municipio_pcode NULL — hay filas así de seeds viejos,
+    # el guard del loader solo frena las nuevas) saldría con pcode y confianza
+    # 1.0 pero sin procedencia, violando el invariante. Se degrada al nivel más
+    # específico que SÍ la tenga: el pin casi siempre cae también en el polígono
+    # del municipio, así que la respuesta pierde precisión, no validez.
+    completos = [c for c in candidatos if _tiene_procedencia(c)]
+    if not completos:
+        return {
+            "pcode": None,
+            "nivel": None,
+            "nombre_oficial": None,
+            **_VACIO,
+            "confianza": 0.0,
+            "candidatos": candidatos,
+            "motivo": "procedencia_incompleta",
+        }
+    mejor = completos[0]
     return {
         "pcode": mejor["pcode"],
         "nivel": mejor["nivel"],
@@ -96,7 +118,7 @@ def resolver_pin(session: Session, lat: float, lon: float) -> dict:
         "departamento_nombre": mejor["departamento_nombre"],
         "etiqueta": mejor["etiqueta"],
         "confianza": 1.0,
-        "candidatos": candidatos,
+        "candidatos": completos + [c for c in candidatos if not _tiene_procedencia(c)],
         "motivo": None,
     }
 
@@ -157,6 +179,21 @@ def resolver_texto(texto: str) -> dict:
             "confianza": round(min(mejor["confianza"], settings.umbral_confianza_geo - 0.01), 3),
             "candidatos": candidatos,
             "motivo": "confianza_baja",
+        }
+
+    # El índice de municipios puede quedarse corto (seed parcial, gazetteer más
+    # completo que geo_divipola, refresh a destiempo). Degradar en silencio a
+    # municipio_nombre=None daría un pcode que el agente no puede situar: mejor
+    # ofrecerlo como candidato y decir por qué no se resolvió.
+    if not _tiene_procedencia(mejor):
+        return {
+            "pcode": None,
+            "nivel": None,
+            "nombre_oficial": None,
+            **_VACIO,
+            "confianza": round(min(mejor["confianza"], settings.umbral_confianza_geo - 0.01), 3),
+            "candidatos": candidatos,
+            "motivo": "procedencia_incompleta",
         }
 
     return {

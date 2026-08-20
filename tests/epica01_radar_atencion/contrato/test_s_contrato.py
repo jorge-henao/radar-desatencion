@@ -170,12 +170,18 @@ class TestResolverUbicacion:
             assert c["etiqueta"], "el agente lee la etiqueta tal cual al repreguntar"
 
     def test_s24_confianza_baja_es_un_resultado_no_un_error(self, client):
-        """Un candidato flojo se ofrece; no se elige ni revienta el flujo."""
+        """Un candidato flojo SE OFRECE; no se elige ni revienta el flujo.
+
+        El assert sobre `candidatos` no es decorativo: sin él, una implementación
+        que simplemente suba el corte de búsqueda y descarte todo pasaría este
+        test mientras rompe la repregunta que el caso existe para proteger.
+        """
         r = client.post("/tools/resolver_ubicacion", json={"texto": "por ahí cerquita del río"}, headers=AUTH)
         assert r.status_code == 200
         cuerpo = r.json()
         assert cuerpo["pcode"] is None
-        assert cuerpo["motivo"] in {"confianza_baja", "sin_candidatos"}
+        assert cuerpo["motivo"] == "confianza_baja"
+        assert cuerpo["candidatos"], "sin candidatos el agente no tiene qué repreguntar"
         assert cuerpo["confianza"] < settings.umbral_confianza_geo
 
     def test_s24_si_hay_pcode_la_confianza_alcanza_el_umbral(self, client):

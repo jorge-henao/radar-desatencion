@@ -7,6 +7,7 @@ municipios reales del DANE, 12 de 14 frases de puro relleno resolvían a un pcod
 """
 
 import pytest
+from sqlalchemy import text
 
 from radar_core.config import settings
 from radar_core.seed.loader import _exigir_municipio
@@ -130,15 +131,23 @@ class TestSaludDeLaNormalizacion:
     def test_u58_los_nombres_reales_conservan_su_token_distintivo(self, nombre, token):
         assert token in normalizar_texto(nombre).split(), f"{nombre} → {normalizar_texto(nombre)!r}"
 
-    def test_u58_ningun_nombre_del_catalogo_normaliza_a_vacio(self, catalogo_denso):
-        """Un nombre que normaliza a vacío es inalcanzable por voz."""
-        import csv
+    def test_u58_ninguna_entrada_cargada_normaliza_a_vacio(self, db, catalogo_denso):
+        """Un nombre que normaliza a vacío es inalcanzable por voz.
 
-        from tests.conftest import FIXTURES
-
-        with (FIXTURES / "municipios_muestra.csv").open(encoding="utf-8") as f:
-            vacios = [fila["nombre"] for fila in csv.DictReader(f) if not normalizar_texto(fila["nombre"])]
-        assert not vacios, f"nombres inalcanzables por voz: {vacios}"
+        Se mira lo REALMENTE cargado en `gazetteer` —storyboard, alias, veredas,
+        centros poblados y el catálogo denso— y no el CSV del fixture: el CSV
+        pasaría aunque una entrada del seed quedara muda.
+        """
+        filas = db.execute(
+            text("SELECT nombre, pcode, nivel, nombre_norm FROM gazetteer")
+        ).mappings().all()
+        assert filas, "el catálogo no se cargó: el test no estaría probando nada"
+        mudas = [
+            f"{f['nombre']!r} ({f['pcode']}, {f['nivel']})"
+            for f in filas
+            if not f["nombre_norm"].strip() or not normalizar_texto(f["nombre"])
+        ]
+        assert not mudas, f"entradas inalcanzables por voz: {mudas}"
 
     @pytest.mark.parametrize(
         "crudo,esperado",
