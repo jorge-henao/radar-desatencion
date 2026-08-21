@@ -51,6 +51,15 @@ class Settings(BaseSettings):
 
     # Umbrales de dominio
     umbral_confianza_geo: float = Field(default=0.80)
+    # Precisión del match por texto (U-56/U-57). El score fuzzy es, en el fondo,
+    # un ratio de longitud: "rio" contra "riofrio" da 0.60 sin que el hablante
+    # haya nombrado lugar alguno. Cuanto más corto el residuo que queda tras
+    # quitar muletillas, más parecido se le exige para auto-resolver.
+    geo_residuo_largo: int = Field(default=9)      # caracteres (sin espacios)
+    geo_residuo_medio: int = Field(default=6)
+    geo_min_score_largo: float = Field(default=0.60)
+    geo_min_score_medio: float = Field(default=0.75)
+    geo_min_score_corto: float = Field(default=0.92)
     ventana_duplicado_horas: int = Field(default=48)
     ventana_dedup_necesidad_horas: int = Field(default=24)
     desfase_dias: int = Field(default=3)

@@ -29,10 +29,18 @@ assert {
   res.status: eq 200
   res.body.nivel: isDefined
   res.body.pcode: isDefined
+  res.body.municipio_pcode: isDefined
+  res.body.departamento_nombre: isDefined
+  res.body.etiqueta: isDefined
 }
 
 docs {
   Contrato: POST /tools/resolver_ubicacion con { lat, lon } (pin GPS de WhatsApp).
-  Devuelve { pcode, nivel, nombre_oficial, confianza, candidatos[] } al nivel
-  DIVIPOLA más específico (municipio o centro poblado).
+  Devuelve el nivel DIVIPOLA más específico que contiene el punto
+  (vereda > centro poblado > municipio).
+
+  Toda ubicación (la respuesta y cada candidato) trae su procedencia:
+  municipio_pcode, municipio_nombre, departamento_codigo, departamento_nombre
+  y etiqueta. Un municipio es su propio municipio — el campo nunca viene en
+  null cuando hay pcode.
 }

@@ -36,6 +36,20 @@ _INSERT_GEO = text(
 )
 
 
+def _exigir_municipio(pcode: str, nivel: str, municipio_pcode: str | None) -> None:
+    """Un territorio no municipal sin municipio no puede entrar (I-13).
+
+    Falla acá, ruidosamente, y no silenciosamente en el API: si esto pasara, la
+    respuesta de resolver_ubicacion tendría un pcode sin procedencia y el agente
+    no podría decir dónde queda el lugar que acaba de resolver.
+    """
+    if nivel != "municipio" and not municipio_pcode:
+        raise ValueError(
+            f"{pcode} ({nivel}) sin municipio_pcode: toda ubicación no municipal "
+            "cuelga de un municipio. Corregir la fuente de datos, no el API."
+        )
+
+
 def cargar_territorio(
     session: Session,
     *,
@@ -49,6 +63,7 @@ def cargar_territorio(
     factor_accesibilidad: float = 1.0,
     priorizado: bool = False,
 ) -> None:
+    _exigir_municipio(pcode, nivel, municipio_pcode)
     session.execute(
         _INSERT_GEO,
         {
@@ -76,6 +91,7 @@ def cargar_gazetteer(
     municipio_pcode: str | None = None,
     municipio_nombre: str | None = None,
 ) -> None:
+    _exigir_municipio(pcode, nivel, municipio_pcode)
     session.add(
         GazetteerEntry(
             nombre=nombre,

@@ -10,13 +10,52 @@ get {
   auth: none
 }
 
+script:pre-request {
+  // Este request se puede correr suelto, sin haber pasado por el 02 y el 04.
+  // Si no hay folio en la sesión, declara un despacho con idempotency_key FIJA:
+  // el Core devuelve siempre el mismo folio y no crea eventos duplicados, así
+  // que se puede repetir sin ensuciar el log (invariante 4).
+  if (!bru.getVar("folio_despacho")) {
+    const axios = require("axios");
+    const { data } = await axios.post(
+      bru.getEnvVar("base_url") + "/tools/crear_evento",
+      {
+        type: "dispatch",
+        payload: {
+          pcode: bru.getVar("pcode_destino") || bru.getEnvVar("pcode_acta_demo"),
+          items: [
+            { categoria: "alimentos", cantidad: 80, unidad: "kits" },
+            { categoria: "agua", cantidad: 120, unidad: "bidones" }
+          ],
+          org_nombre: "Acopio Pereira",
+          eta: "mañana en la tarde"
+        },
+        reporter_ref: "bruno-acta-demo",
+        idempotency_key: "bruno-acta-demo-fijo-v1"
+      },
+      { headers: { Authorization: "Bearer " + bru.getEnvVar("token") } }
+    );
+    bru.setVar("folio_despacho", data.folio);
+  }
+}
+
 assert {
   res.status: eq 200
   res.headers['content-type']: eq application/pdf
+}
+
+tests {
+  test("el PDF no viene vacío", function () {
+    expect(res.getBody().length).to.be.above(1000);
+  });
 }
 
 docs {
   Storyboard paso 5: el acta lleva el folio, el número oficial de WhatsApp y un
   QR wa.me/<num>?text=DS-xxxx. Se imprime y viaja físicamente con el camión —
   cada entrega siembra un reportante. Pública: quien tiene el papel puede escanearla.
+
+  El acta se genera perezosamente: basta con que el folio exista y sea de tipo
+  dispatch. Corriendo la colección completa usa el folio del paso 04; suelto, el
+  pre-request declara su propio despacho (idempotency_key fija, sin duplicar).
 }

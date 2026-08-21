@@ -61,7 +61,8 @@ completos de la especificación. Los IDs de esta suite van en los nombres de cad
 | Idempotencia real ante reintentos de la plataforma | U-20, I-05, S-10..S-12, P-05 |
 | Validación de dominio en el Core, no en el LLM | U-30..U-34, S-13..S-15, U3-02..U3-03 |
 | Sin eventos = alerta_maxima, no NULL | U-40, I-15 |
-| Voz: transcripción sucia → pcode correcto o desambiguación | U-50..U-55, S-20..S-23 |
+| Voz: transcripción sucia → pcode correcto o desambiguación | U-50..U-55, S-20..S-24 |
+| Nunca auto-resolver sin certeza; toda ubicación con procedencia | U-56..U-58, I-13, I-14 |
 | Latencia compatible con conversación de voz | P-01..P-04 |
 | Export estático correcto y sin dependencia de DB en lectura | I-20..I-23, S-30..S-33, I2-05, E-14 |
 | Notificador nunca envía directo / usa ref opaca | I-30, X-03 |
@@ -118,6 +119,10 @@ completos de la especificación. Los IDs de esta suite van en los nombres de cad
 | U-53 | P1 | Alias y apócopes del gazetteer ("San José" → San José del Palmar en contexto Chocó) | El alias resuelve al pcode canónico |
 | U-54 | P1 | Lugar inexistente / basura ("asdfgh") | `candidatos[]` vacío + confianza 0, respuesta estructurada (el agente repregunta) |
 | U-55 | P2 | Texto con municipio como desambiguador ("La Cabaña, Jamundí") | El municipio acota la búsqueda y sube la confianza |
+| U-56 | P0 | Corpus de relleno sin lugar ("por ahí cerquita del río", "en la vereda esa") contra catálogo denso de nombres reales | Ninguna auto-resuelve a un pcode; el control positivo de transcripciones sucias reales sigue resolviendo |
+| U-57 | P0 | Candidato único por debajo del piso ("kibdo" → Quibdó) | `pcode` null + `motivo: "confianza_baja"` + `candidatos[]` no vacío — se ofrece, no se elige |
+| U-58 | P0 | Palabras de nombres reales del DANE contra la lista de stopwords | Ninguna es stopword; ningún nombre del catálogo normaliza a vacío |
+| U-59 | P1 | Title case de topónimos ("VALLE DEL CAUCA") | "Valle del Cauca", no "Valle Del Cauca" — el departamento se lee en voz |
 
 #### Otros
 
@@ -147,6 +152,10 @@ completos de la especificación. Los IDs de esta suite van en los nombres de cad
 | I-10 | P0 | Pin dentro de un municipio conocido | pcode correcto contra el polígono DANE |
 | I-11 | P1 | Pin en frontera entre polígonos / dentro de centro poblado | Resuelve al nivel más específico (`centro_poblado` sobre `municipio`) |
 | I-12 | P1 | Pin fuera de Colombia o en el mar | Respuesta estructurada "fuera de cobertura", nunca 500 |
+| I-13 | P0 | Procedencia de toda ubicación resuelta, en ambos modos | Si hay `pcode` hay `municipio_pcode` + `municipio_nombre`, en la respuesta y en cada candidato; un municipio es su propio municipio; sin ubicación, la procedencia va entera en null |
+| I-13b | P0 | Pin sobre territorio sin municipio (filas heredadas del pre-guard) | Degrada al nivel más específico con procedencia; el insituable no aparece ni como candidato; si ninguno la tiene, `motivo: "procedencia_incompleta"` con `candidatos: []` |
+| I-13c | P0 | Texto que resuelve a un municipio ausente del índice (seed parcial) | El candidato se filtra antes de decidir — no se auto-resuelve ni se ofrece; `motivo: "procedencia_incompleta"` |
+| I-14 | P1 | Mismo territorio por pin y por texto | Idénticos `municipio_*` y `departamento_*` — las dos fuentes (PostGIS y el índice en memoria) no pueden divergir |
 | I-15 | P0 | Refresh de `mv_desatencion` con territorio priorizado sin eventos | El pcode aparece con `alerta_maxima` |
 
 #### Reconciliación (batch)
@@ -207,6 +216,7 @@ completos de la especificación. Los IDs de esta suite van en los nombres de cad
 | S-21 | P0 | Modo texto (voz): nombre único | pcode correcto, sin desambiguación |
 | S-22 | P0 | Modo texto: nombre ambiguo | `candidatos[]` ≥ 2 y confianza bajo umbral → el agente puede preguntar "¿La Cabaña de Jamundí o la de Riofrío?" |
 | S-23 | P1 | Ni pin ni texto, o ambos a la vez | 400 estructurado indicando el modo esperado |
+| S-24 | P0 | Desde el agente: procedencia suficiente para repreguntar | Cada candidato trae municipio, departamento y `etiqueta` legible tal cual; `pcode` y `confianza` nunca se contradicen |
 
 #### `consultar_folio`
 

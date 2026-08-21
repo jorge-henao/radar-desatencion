@@ -1,0 +1,417 @@
+pcode,nombre,departamento
+05001,Medellín,Antioquia
+05030,Amagá,Antioquia
+05031,Amalfi,Antioquia
+05034,Andes,Antioquia
+05040,Anorí,Antioquia
+05044,Anzá,Antioquia
+05045,Apartadó,Antioquia
+05088,Bello,Antioquia
+05129,Caldas,Antioquia
+05134,Campamento,Antioquia
+05147,Carepa,Antioquia
+05154,Caucasia,Antioquia
+05190,Cisneros,Antioquia
+05212,Copacabana,Antioquia
+05264,Entrerríos,Antioquia
+05318,Guarne,Antioquia
+05360,Itagüí,Antioquia
+05364,Jardín,Antioquia
+05368,Jericó,Antioquia
+05376,La Ceja,Antioquia
+05380,La Estrella,Antioquia
+05425,Maceo,Antioquia
+05480,Mutatá,Antioquia
+05483,Nariño,Antioquia
+05495,Nechí,Antioquia
+05501,Olaya,Antioquia
+05541,Peñol,Antioquia
+05543,Peque,Antioquia
+05591,Puerto Triunfo,Antioquia
+05607,Retiro,Antioquia
+05642,Salgar,Antioquia
+05652,San Francisco,Antioquia
+05674,San Vicente Ferrer,Antioquia
+05756,Sonsón,Antioquia
+05790,Tarazá,Antioquia
+05792,Tarso,Antioquia
+05819,Toledo,Antioquia
+05837,Turbo,Antioquia
+05847,Urrao,Antioquia
+05858,Vegachí,Antioquia
+05885,Yalí,Antioquia
+05893,Yondó,Antioquia
+08078,Baranoa,Atlántico
+08296,Galapa,Atlántico
+08436,Manatí,Atlántico
+08549,Piojó,Atlántico
+08758,Soledad,Atlántico
+08770,Suan,Atlántico
+08832,Tubará,Atlántico
+13006,Achí,Bolívar
+13042,Arenal,Bolívar
+13052,Arjona,Bolívar
+13188,Cicuco,Bolívar
+13248,El Guamo,Bolívar
+13473,Morales,Bolívar
+13490,Norosí,Bolívar
+13600,Río Viejo,Bolívar
+13655,San Jacinto del Cauca,Bolívar
+13744,Simití,Bolívar
+13780,Talaigua Nuevo,Bolívar
+13836,Turbaco,Bolívar
+15001,Tunja,Boyacá
+15047,Aquitania,Boyacá
+15051,Arcabuco,Boyacá
+15087,Belén,Boyacá
+15090,Berbeo,Boyacá
+15104,Boyacá,Boyacá
+15131,Caldas,Boyacá
+15183,Chita,Boyacá
+15189,Ciénega,Boyacá
+15212,Coper,Boyacá
+15223,Cubará,Boyacá
+15236,Chivor,Boyacá
+15296,Gámeza,Boyacá
+15317,Guacamayas,Boyacá
+15362,Iza,Boyacá
+15368,Jericó,Boyacá
+15401,La Victoria,Boyacá
+15442,Maripí,Boyacá
+15464,Mongua,Boyacá
+15466,Monguí,Boyacá
+15476,Motavita,Boyacá
+15480,Muzo,Boyacá
+15491,Nobsa,Boyacá
+15500,Oicatá,Boyacá
+15514,Páez,Boyacá
+15516,Paipa,Boyacá
+15518,Pajarito,Boyacá
+15531,Pauna,Boyacá
+15533,Paya,Boyacá
+15537,Paz de Río,Boyacá
+15542,Pesca,Boyacá
+15550,Pisba,Boyacá
+15599,Ramiriquí,Boyacá
+15621,Rondón,Boyacá
+15632,Saboyá,Boyacá
+15646,Samacá,Boyacá
+15673,San Mateo,Boyacá
+15740,Siachoque,Boyacá
+15753,Soatá,Boyacá
+15755,Socotá,Boyacá
+15757,Socha,Boyacá
+15762,Sora,Boyacá
+15764,Soracá,Boyacá
+15774,Susacón,Boyacá
+15790,Tasco,Boyacá
+15798,Tenza,Boyacá
+15804,Tibaná,Boyacá
+15814,Toca,Boyacá
+15816,Togüí,Boyacá
+15820,Tópaga,Boyacá
+15822,Tota,Boyacá
+15837,Tuta,Boyacá
+15839,Tutazá,Boyacá
+15842,Úmbita,Boyacá
+15861,Ventaquemada,Boyacá
+17272,Filadelfia,Caldas
+17486,Neira,Caldas
+17513,Pácora,Caldas
+17662,Samaná,Caldas
+17777,Supía,Caldas
+17867,Victoria,Caldas
+18256,El Paujíl,Caquetá
+18460,Milán,Caquetá
+18756,Solano,Caquetá
+18785,Solita,Caquetá
+18860,Valparaíso,Caquetá
+19075,Balboa,Cauca
+19142,Caloto,Cauca
+19318,Guapi,Cauca
+19355,Inzá,Cauca
+19364,Jambaló,Cauca
+19397,La Vega,Cauca
+19517,Páez,Cauca
+19532,Patía,Cauca
+19533,Piamonte,Cauca
+19548,Piendamó - Tunía,Cauca
+19573,Puerto Tejada,Cauca
+19585,Puracé,Cauca
+19622,Rosas,Cauca
+19743,Silvia,Cauca
+19780,Suárez,Cauca
+19785,Sucre,Cauca
+19807,Timbío,Cauca
+19824,Totoró,Cauca
+20013,Agustín Codazzi,Cesar
+20032,Astrea,Cesar
+20250,El Paso,Cesar
+20295,Gamarra,Cesar
+20550,Pelaya,Cesar
+20614,Río de Oro,Cesar
+20621,La Paz,Cesar
+23001,Montería,Córdoba
+23068,Ayapel,Córdoba
+23162,Cereté,Córdoba
+23168,Chimá,Córdoba
+23182,Chinú,Córdoba
+23350,La Apartada,Córdoba
+23417,Lorica,Córdoba
+23464,Momil,Córdoba
+23466,Montelíbano,Córdoba
+23672,San Antero,Córdoba
+23815,Tuchín,Córdoba
+25019,Albán,Cundinamarca
+25099,Bojacá,Cundinamarca
+25120,Cabrera,Cundinamarca
+25126,Cajicá,Cundinamarca
+25175,Chía,Cundinamarca
+25200,Cogua,Cundinamarca
+25214,Cota,Cundinamarca
+25245,El Colegio,Cundinamarca
+25281,Fosca,Cundinamarca
+25286,Funza,Cundinamarca
+25299,Gama,Cundinamarca
+25317,Guachetá,Cundinamarca
+25322,Guasca,Cundinamarca
+25372,Junín,Cundinamarca
+25386,La Mesa,Cundinamarca
+25398,La Peña,Cundinamarca
+25402,La Vega,Cundinamarca
+25430,Madrid,Cundinamarca
+25436,Manta,Cundinamarca
+25438,Medina,Cundinamarca
+25483,Nariño,Cundinamarca
+25488,Nilo,Cundinamarca
+25513,Pacho,Cundinamarca
+25518,Paime,Cundinamarca
+25524,Pandi,Cundinamarca
+25535,Pasca,Cundinamarca
+25580,Pulí,Cundinamarca
+25596,Quipile,Cundinamarca
+25599,Apulo,Cundinamarca
+25736,Sesquilé,Cundinamarca
+25740,Sibaté,Cundinamarca
+25754,Soacha,Cundinamarca
+25758,Sopó,Cundinamarca
+25772,Suesca,Cundinamarca
+25777,Supatá,Cundinamarca
+25779,Susa,Cundinamarca
+25785,Tabio,Cundinamarca
+25793,Tausa,Cundinamarca
+25797,Tena,Cundinamarca
+25799,Tenjo,Cundinamarca
+25817,Tocancipá,Cundinamarca
+25839,Ubalá,Cundinamarca
+25841,Ubaque,Cundinamarca
+25845,Une,Cundinamarca
+25851,Útica,Cundinamarca
+25867,Vianí,Cundinamarca
+25871,Villagómez,Cundinamarca
+25878,Viotá,Cundinamarca
+25885,Yacopí,Cundinamarca
+27001,Quibdó,Chocó
+27006,Acandí,Chocó
+27025,Alto Baudó,Chocó
+27050,Atrato,Chocó
+27073,Bagadó,Chocó
+27077,Bajo Baudó,Chocó
+27099,Bojayá,Chocó
+27205,Condoto,Chocó
+27372,Juradó,Chocó
+27413,Lloró,Chocó
+27491,Nóvita,Chocó
+27495,Nuquí,Chocó
+27580,Río Iró,Chocó
+27660,San José del Palmar,Chocó
+27745,Sipí,Chocó
+27787,Tadó,Chocó
+27800,Unguía,Chocó
+27810,Unión Panamericana,Chocó
+41001,Neiva,Huila
+41013,Agrado,Huila
+41016,Aipe,Huila
+41078,Baraya,Huila
+41206,Colombia,Huila
+41244,Elías,Huila
+41298,Garzón,Huila
+41349,Hobo,Huila
+41357,Íquira,Huila
+41359,Isnos,Huila
+41396,La Plata,Huila
+41483,Nátaga,Huila
+41518,Paicol,Huila
+41548,Pital,Huila
+41615,Rivera,Huila
+41660,Saladoblanco,Huila
+41770,Suaza,Huila
+41791,Tarqui,Huila
+41799,Tello,Huila
+41801,Teruel,Huila
+41807,Timaná,Huila
+41872,Villavieja,Huila
+44378,Hatonuevo,La Guajira
+44430,Maicao,La Guajira
+44847,Uribia,La Guajira
+47030,Algarrobo,Magdalena
+47268,El Retén,Magdalena
+47318,Guamal,Magdalena
+47555,Plato,Magdalena
+47605,Remolino,Magdalena
+47960,Zapayán,Magdalena
+47980,Zona Bananera,Magdalena
+50245,El Calvario,Meta
+50318,Guamal,Meta
+50370,Uribe,Meta
+50400,Lejanías,Meta
+50683,San Juan de Arama,Meta
+52001,Pasto,Nariño
+52019,Albán,Nariño
+52022,Aldana,Nariño
+52036,Ancuya,Nariño
+52079,Barbacoas,Nariño
+52083,Belén,Nariño
+52203,Colón,Nariño
+52227,Cumbal,Nariño
+52233,Cumbitara,Nariño
+52287,Funes,Nariño
+52320,Guaitarilla,Nariño
+52352,Iles,Nariño
+52354,Imués,Nariño
+52378,La Cruz,Nariño
+52390,La Tola,Nariño
+52399,La Unión,Nariño
+52405,Leiva,Nariño
+52427,Magüí,Nariño
+52480,Nariño,Nariño
+52506,Ospina,Nariño
+52560,Potosí,Nariño
+52678,Samaniego,Nariño
+52786,Taminango,Nariño
+52788,Tangua,Nariño
+54003,Ábrego,Norte de Santander
+54109,Bucarasica,Norte de Santander
+54125,Cácota,Norte de Santander
+54250,El Tarra,Norte de Santander
+54344,Hacarí,Norte de Santander
+54347,Herrán,Norte de Santander
+54418,Lourdes,Norte de Santander
+54498,Ocaña,Norte de Santander
+54673,San Cayetano,Norte de Santander
+54743,Silos,Norte de Santander
+54810,Tibú,Norte de Santander
+54820,Toledo,Norte de Santander
+63001,Armenia,Quindio
+63302,Génova,Quindio
+63548,Pijao,Quindio
+66045,Apía,Risaralda
+66075,Balboa,Risaralda
+66170,Dosquebradas,Risaralda
+66383,La Celia,Risaralda
+66682,Santa Rosa de Cabal,Risaralda
+68013,Aguada,Santander
+68121,Cabrera,Santander
+68132,California,Santander
+68160,Cepitá,Santander
+68169,Charta,Santander
+68176,Chima,Santander
+68190,Cimitarra,Santander
+68229,Curití,Santander
+68255,El Playón,Santander
+68264,Encino,Santander
+68266,Enciso,Santander
+68296,Galán,Santander
+68307,Girón,Santander
+68318,Guaca,Santander
+68320,Guadalupe,Santander
+68327,Güepsa,Santander
+68344,Hato,Santander
+68370,Jordán,Santander
+68397,La Paz,Santander
+68432,Málaga,Santander
+68498,Ocamonte,Santander
+68500,Oiba,Santander
+68502,Onzaga,Santander
+68522,Palmar,Santander
+68533,Páramo,Santander
+68572,Puente Nacional,Santander
+68575,Puerto Wilches,Santander
+68673,San Benito,Santander
+68679,San Gil,Santander
+68682,San Joaquín,Santander
+68689,San Vicente de Chucurí,Santander
+68770,Suaita,Santander
+68773,Sucre,Santander
+68780,Suratá,Santander
+68820,Tona,Santander
+68855,Valle de San José,Santander
+68861,Vélez,Santander
+68867,Vetas,Santander
+70204,Colosó,Sucre
+70215,Corozal,Sucre
+70230,Chalán,Sucre
+70473,Morroa,Sucre
+70508,Ovejas,Sucre
+70742,San Luis de Sincé,Sucre
+70771,Sucre,Sucre
+73001,Ibagué,Tolima
+73055,Armero,Tolima
+73067,Ataco,Tolima
+73200,Coello,Tolima
+73226,Cunday,Tolima
+73236,Dolores,Tolima
+73270,Falan,Tolima
+73283,Fresno,Tolima
+73319,Guamo,Tolima
+73347,Herveo,Tolima
+73349,Honda,Tolima
+73408,Lérida,Tolima
+73411,Líbano,Tolima
+73449,Melgar,Tolima
+73504,Ortega,Tolima
+73555,Planadas,Tolima
+73563,Prado,Tolima
+73624,Rovira,Tolima
+73686,Santa Isabel,Tolima
+73770,Suárez,Tolima
+76001,Cali,Valle del Cauca
+76020,Alcalá,Valle del Cauca
+76041,Ansermanuevo,Valle del Cauca
+76109,Buenaventura,Valle del Cauca
+76126,Calima,Valle del Cauca
+76147,Cartago,Valle del Cauca
+76233,Dagua,Valle del Cauca
+76243,El Águila,Valle del Cauca
+76364,Jamundí,Valle del Cauca
+76497,Obando,Valle del Cauca
+76616,Riofrío,Valle del Cauca
+76622,Roldanillo,Valle del Cauca
+76823,Toro,Valle del Cauca
+76834,Tuluá,Valle del Cauca
+76845,Ulloa,Valle del Cauca
+76869,Vijes,Valle del Cauca
+76890,Yotoco,Valle del Cauca
+76892,Yumbo,Valle del Cauca
+76895,Zarzal,Valle del Cauca
+81001,Arauca,Arauca
+81300,Fortul,Arauca
+81794,Tame,Arauca
+85001,Yopal,Casanare
+85139,Maní,Casanare
+85230,Orocué,Casanare
+85263,Pore,Casanare
+85315,Sácama,Casanare
+85400,Támara,Casanare
+85430,Trinidad,Casanare
+86001,Mocoa,Putumayo
+86219,Colón,Putumayo
+86320,Orito,Putumayo
+86749,Sibundoy,Putumayo
+91263,El Encanto,Amazonas
+91798,Tarapacá,Amazonas
+95001,San José del Guaviare,Guaviare
+97001,Mitú,Vaupés
+97161,Carurú,Vaupés
+97511,Pacoa,Vaupés
+97889,Yavaraté,Vaupés

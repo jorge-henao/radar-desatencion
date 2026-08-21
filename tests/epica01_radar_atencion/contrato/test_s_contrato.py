@@ -153,6 +153,48 @@ class TestResolverUbicacion:
         assert cuerpo["confianza"] < settings.umbral_confianza_geo
         assert len(cuerpo["candidatos"]) >= 2  # "¿La Cabaña de Jamundí o la de Riofrío?"
 
+    def test_s24_cada_candidato_dice_de_donde_es(self, client):
+        """Desde el agente: la repregunta se lee, no se compone.
+
+        "La Cabaña" existe en Jamundí y en Riofrío. Sin procedencia en cada
+        candidato el LLM tiene que inventar cómo distinguirlas — y ahí es donde
+        aparece "la vereda La Cabaña cerca de …", que nadie dijo.
+        """
+        r = client.post("/tools/resolver_ubicacion", json={"texto": "la vereda La Cabaña"}, headers=AUTH)
+        cuerpo = r.json()
+        assert cuerpo["pcode"] is None and len(cuerpo["candidatos"]) >= 2
+        municipios = {c["municipio_nombre"] for c in cuerpo["candidatos"]}
+        assert {"Jamundí", "Riofrío"} <= municipios
+        for c in cuerpo["candidatos"]:
+            assert c["municipio_pcode"] and c["departamento_nombre"]
+            assert c["etiqueta"], "el agente lee la etiqueta tal cual al repreguntar"
+
+    def test_s24_confianza_baja_es_un_resultado_no_un_error(self, client):
+        """Un candidato flojo SE OFRECE; no se elige ni revienta el flujo.
+
+        El assert sobre `candidatos` no es decorativo: sin él, una implementación
+        que simplemente suba el corte de búsqueda y descarte todo pasaría este
+        test mientras rompe la repregunta que el caso existe para proteger.
+        """
+        r = client.post("/tools/resolver_ubicacion", json={"texto": "por ahí cerquita del río"}, headers=AUTH)
+        assert r.status_code == 200
+        cuerpo = r.json()
+        assert cuerpo["pcode"] is None
+        assert cuerpo["motivo"] == "confianza_baja"
+        assert cuerpo["candidatos"], "sin candidatos el agente no tiene qué repreguntar"
+        assert cuerpo["confianza"] < settings.umbral_confianza_geo
+
+    def test_s24_si_hay_pcode_la_confianza_alcanza_el_umbral(self, client):
+        """Invariante del contrato: pcode y confianza no se contradicen."""
+        for texto in ("Jamundí", "corregimiento San Pedro", "la vereda La Cabaña",
+                      "por ahí cerquita del río", "asdfgh"):
+            cuerpo = client.post(
+                "/tools/resolver_ubicacion", json={"texto": texto}, headers=AUTH
+            ).json()
+            if cuerpo["pcode"] is not None:
+                assert cuerpo["confianza"] >= settings.umbral_confianza_geo, texto
+                assert cuerpo["municipio_pcode"], texto
+
     def test_s23_modos_invalidos(self, client):
         for cuerpo in ({}, {"lat": 4.9, "lon": -76.2, "texto": "San Pedro"}, {"lat": 4.9}):
             r = client.post("/tools/resolver_ubicacion", json=cuerpo, headers=AUTH)

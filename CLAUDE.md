@@ -52,7 +52,12 @@ Estructura: `radar_core/` (app) — `models.py` + `ddl.py` (esquema, trigger app
 ```
 POST /tools/resolver_ubicacion
   in:  { lat, lon } | { texto: "vereda La Cabaña, Jamundí" }
-  out: { pcode, nivel: municipio|centro_poblado, nombre_oficial, confianza, candidatos[] }
+  out: { pcode, nivel: municipio|centro_poblado|vereda, nombre_oficial,
+         municipio_pcode, municipio_nombre, departamento_codigo, departamento_nombre,
+         etiqueta,                        ← string hablable, listo para repreguntar
+         confianza, candidatos[],         ← cada candidato lleva los mismos campos
+         motivo }                         ← ambiguo | confianza_baja | sin_candidatos
+                                            | fuera_de_cobertura | procedencia_incompleta
 
 POST /tools/crear_evento
   in:  { type: need|dispatch|receipt, payload: {...}, reporter_ref, idempotency_key }
@@ -82,6 +87,7 @@ Autenticación: token de workspace. Los errores de validación se devuelven **es
 10. **Audio sin consentimiento explícito jamás es público** (épica 02). El flag de consentimiento es regla dura; sin él, el audio queda solo como evidencia privada del despachador reconciliado. Lili Analyze se consume **exclusivamente por su API de solo lectura** — nunca Elasticsearch/S3 directo, y el Radar nunca invoca el análisis.
 11. **El front no inventa — renderiza** (épicas 02/03). Todo string visible proviene del JSON del export, de las plantillas taxativas (P1–P8) o del microcopy fijo (M0–M7) de la spec del front. Prohibido inferir personas, causas, citas o cifras que no estén en los datos.
 12. **El Vigía nunca degrada la alerta por ausencia.** Territorio sin eventos NI señales sigue siendo alerta máxima — las señales de medios elevan visibilidad, no reemplazan el silencio como dato.
+13. **Toda ubicación ofrecida se puede situar, y nunca se resuelve sin certeza.** Si hay `pcode` hay `municipio_pcode` + `municipio_nombre` (un municipio es su propio municipio) y `confianza >= umbral_confianza_geo`. La garantía cubre la respuesta **y cada elemento de `candidatos[]`**: un candidato insituable no se ofrece, porque el agente podría elegirlo y crear un evento con un pcode del que no sabe decir dónde queda. Por debajo del piso se devuelven los candidatos sanos con `motivo` — jamás un pcode adivinado. Si nada de lo tocado se puede situar (municipio inexistente, o `municipio_pcode` NULL heredado de seeds anteriores al guard), `motivo: "procedencia_incompleta"` con `candidatos: []`; por pin se degrada antes al nivel más específico que sí tenga procedencia. `departamento_*` se deriva del municipio y es best-effort: si la fila del municipio no lo trae, sale en null y el refresh del gazetteer lo advierte — no bloquea la resolución. El piso se escala con la longitud del texto útil: un residuo corto ("rio") hace match alto con cualquier nombre corto sin que el hablante haya nombrado lugar alguno.
 
 ## Modelo de datos
 
@@ -132,6 +138,8 @@ La suite de casos está en [docs/test-suite.md](docs/test-suite.md), cubre las t
 ## Trampas conocidas
 
 - `resolver_ubicacion` modo texto recibe **transcripciones sucias** de voz ("la cabaña por jamundí, por ahí cerquita"). El gazetteer con fuzzy match y el campo `candidatos[]` existen por eso — no asumir texto limpio.
+- La lista `_STOPWORDS` del gazetteer **se aplica también al catálogo** al cargarlo, así que agregar una palabra que aparezca en nombres reales mutila el índice en silencio: `alto` está en 780 nombres de vereda del DANE, `bajo` en 391, `rio` en 205. Medir contra los shapefiles antes de agregar cualquier palabra — U-58 es el guard.
+- El score fuzzy es, en el fondo, un **ratio de longitud**: `"rio"` contra `"riofrio"` da exactamente 0.60. Por eso el piso para auto-resolver se escala con la longitud del residuo (`score_minimo`) y no es un corte plano.
 - La plataforma **reintenta tool calls** ante timeouts: cualquier endpoint de escritura sin idempotencia real produce eventos duplicados en producción.
 - Un `receipt` puede citar un folio inexistente o con typo (dictado por voz) — `consultar_folio` debe distinguir "no existe" de error, y el flujo debe continuar sin folio (match probabilístico posterior).
 - Los shapefiles DANE tienen polígonos con geometrías inválidas ocasionales — sanear al cargar (`ST_MakeValid`), no en query time.
